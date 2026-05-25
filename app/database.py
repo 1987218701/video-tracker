@@ -1,4 +1,3 @@
-
 import sqlite3
 import os
 from flask import g
@@ -41,12 +40,11 @@ def init_db():
     """初始化数据库表"""
     db = get_db()
     
-    # 检查表是否存在
     cursor = db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='videos'")
     table_exists = cursor.fetchone()
     
     if not table_exists:
-        # 创建新表（不含rating字段）
+        print("Creating new videos table...")
         db.execute('''
             CREATE TABLE videos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,21 +62,19 @@ def init_db():
             );
         ''')
     else:
-        # 检查并添加新字段
-        try:
-            # 尝试添加 current_episode_minutes
-            db.execute("ALTER TABLE videos ADD COLUMN current_episode_minutes INTEGER DEFAULT NULL")
-        except sqlite3.OperationalError:
-            # 列可能已存在，忽略错误
-            pass
+        print("Updating existing videos table...")
+        cursor = db.execute("PRAGMA table_info(videos)")
+        columns = [row['name'] for row in cursor.fetchall()]
         
-        try:
-            # 删除 rating 列（SQLite不支持直接删除列，需要重建表）
-            cursor = db.execute("PRAGMA table_info(videos)")
-            columns = [row['name'] for row in cursor.fetchall()]
-            
-            if 'rating' in columns:
-                # 重建表，移除rating列
+        if 'current_episode_minutes' not in columns:
+            try:
+                db.execute("ALTER TABLE videos ADD COLUMN current_episode_minutes INTEGER DEFAULT NULL")
+                print("Added current_episode_minutes column.")
+            except Exception as e:
+                print(f"Could not add column: {e}")
+        
+        if 'rating' in columns:
+            try:
                 db.execute('''
                     CREATE TABLE videos_new (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,8 +101,8 @@ def init_db():
                 ''')
                 db.execute("DROP TABLE videos;")
                 db.execute("ALTER TABLE videos_new RENAME TO videos;")
-        except sqlite3.OperationalError:
-            # 忽略重建过程中的错误
-            pass
+                print("Removed rating column successfully.")
+            except Exception as e:
+                print(f"Could not remove rating column: {e}")
     
     db.commit()

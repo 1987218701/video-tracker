@@ -1,188 +1,187 @@
-
-&lt;!DOCTYPE html&gt;
-&lt;html lang="zh-CN"&gt;
-&lt;head&gt;
-    &lt;meta charset="UTF-8"&gt;
-    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
-    &lt;title&gt;🎬 视频追剧记录&lt;/title&gt;
-    &lt;link rel="stylesheet" href="/static/css/style.css"&gt;
-    &lt;link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css"&gt;
-    &lt;style&gt;
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 视频追剧记录</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <style>
         [v-cloak] { display: none; }
-    &lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
+    </style>
+</head>
+<body>
 {% raw %}
-    &lt;div id="app" v-cloak&gt;
-        &lt;el-container class="app-container"&gt;
-            &lt;el-header class="app-header"&gt;
-                &lt;div class="header-content"&gt;
-                    &lt;h1 class="app-title"&gt;🎬 视频追剧记录&lt;/h1&gt;
-                    &lt;div class="stats-bar"&gt;
-                        &lt;stat-card label="总计" :value="stats.total" color="#409EFF"&gt;&lt;/stat-card&gt;
-                        &lt;stat-card label="在看" :value="stats.watching" color="#409EFF"&gt;&lt;/stat-card&gt;
-                        &lt;stat-card label="已看完" :value="stats.completed" color="#67C23A"&gt;&lt;/stat-card&gt;
-                        &lt;stat-card label="想看" :value="stats.plan" color="#E6A23C"&gt;&lt;/stat-card&gt;
-                        &lt;stat-card label="弃剧" :value="stats.dropped" color="#F56C6C"&gt;&lt;/stat-card&gt;
-                    &lt;/div&gt;
-                &lt;/div&gt;
-            &lt;/el-header&gt;
+    <div id="app" v-cloak>
+        <el-container class="app-container">
+            <el-header class="app-header">
+                <div class="header-content">
+                    <h1 class="app-title">🎬 视频追剧记录</h1>
+                    <div class="stats-bar">
+                        <stat-card label="总计" :value="stats.total" color="#409EFF"></stat-card>
+                        <stat-card label="在看" :value="stats.watching" color="#409EFF"></stat-card>
+                        <stat-card label="已看完" :value="stats.completed" color="#67C23A"></stat-card>
+                        <stat-card label="想看" :value="stats.plan" color="#E6A23C"></stat-card>
+                        <stat-card label="弃剧" :value="stats.dropped" color="#F56C6C"></stat-card>
+                    </div>
+                </div>
+            </el-header>
             
-            &lt;el-main class="app-main"&gt;
-                &lt;el-card class="toolbar-card" shadow="hover"&gt;
-                    &lt;el-row :gutter="12" class="toolbar"&gt;
-                        &lt;el-col :xs="24" :sm="12" :md="8"&gt;
-                            &lt;el-input
+            <el-main class="app-main">
+                <el-card class="toolbar-card" shadow="hover">
+                    <el-row :gutter="12" class="toolbar">
+                        <el-col :xs="24" :sm="12" :md="8">
+                            <el-input
                                 v-model="filters.keyword"
                                 placeholder="搜索视频名称..."
                                 prefix-icon="Search"
                                 clearable
                                 @input="debounceLoadVideos"
-                            &gt;&lt;/el-input&gt;
-                        &lt;/el-col&gt;
-                        &lt;el-col :xs="12" :sm="6" :md="4"&gt;
-                            &lt;el-select v-model="filters.category" placeholder="全部分类" clearable style="width: 100%" @change="loadVideos"&gt;
-                                &lt;el-option label="电视剧" value="电视剧"&gt;&lt;/el-option&gt;
-                                &lt;el-option label="电影" value="电影"&gt;&lt;/el-option&gt;
-                                &lt;el-option label="动漫" value="动漫"&gt;&lt;/el-option&gt;
-                                &lt;el-option label="综艺" value="综艺"&gt;&lt;/el-option&gt;
-                                &lt;el-option label="纪录片" value="纪录片"&gt;&lt;/el-option&gt;
-                                &lt;el-option label="其他" value="其他"&gt;&lt;/el-option&gt;
-                            &lt;/el-select&gt;
-                        &lt;/el-col&gt;
-                        &lt;el-col :xs="12" :sm="6" :md="4"&gt;
-                            &lt;el-select v-model="filters.status" placeholder="全部状态" clearable style="width: 100%" @change="loadVideos"&gt;
-                                &lt;el-option label="在看" value="在看"&gt;&lt;/el-option&gt;
-                                &lt;el-option label="已看完" value="已看完"&gt;&lt;/el-option&gt;
-                                &lt;el-option label="想看" value="想看"&gt;&lt;/el-option&gt;
-                                &lt;el-option label="弃剧" value="弃剧"&gt;&lt;/el-option&gt;
-                            &lt;/el-select&gt;
-                        &lt;/el-col&gt;
-                        &lt;el-col :xs="24" :sm="24" :md="8" class="add-btn-col"&gt;
-                            &lt;el-button type="primary" @click="openModal()"&gt;➕ 添加记录&lt;/el-button&gt;
-                        &lt;/el-col&gt;
-                    &lt;/el-row&gt;
-                &lt;/el-card&gt;
+                            ></el-input>
+                        </el-col>
+                        <el-col :xs="12" :sm="6" :md="4">
+                            <el-select v-model="filters.category" placeholder="全部分类" clearable style="width: 100%" @change="loadVideos">
+                                <el-option label="电视剧" value="电视剧"></el-option>
+                                <el-option label="电影" value="电影"></el-option>
+                                <el-option label="动漫" value="动漫"></el-option>
+                                <el-option label="综艺" value="综艺"></el-option>
+                                <el-option label="纪录片" value="纪录片"></el-option>
+                                <el-option label="其他" value="其他"></el-option>
+                            </el-select>
+                        </el-col>
+                        <el-col :xs="12" :sm="6" :md="4">
+                            <el-select v-model="filters.status" placeholder="全部状态" clearable style="width: 100%" @change="loadVideos">
+                                <el-option label="在看" value="在看"></el-option>
+                                <el-option label="已看完" value="已看完"></el-option>
+                                <el-option label="想看" value="想看"></el-option>
+                                <el-option label="弃剧" value="弃剧"></el-option>
+                            </el-select>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="8" class="add-btn-col">
+                            <el-button type="primary" @click="openModal()">➕ 添加记录</el-button>
+                        </el-col>
+                    </el-row>
+                </el-card>
                 
-                &lt;div class="video-list" v-loading="loading"&gt;
-                    &lt;el-empty v-if="!loading &amp;&amp; videos.length === 0" description="还没有记录，点击\"添加记录\"开始吧！"&gt;&lt;/el-empty&gt;
-                    &lt;el-row :gutter="12"&gt;
-                        &lt;el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="(video, index) in videos" :key="video.id" style="margin-bottom: 12px"&gt;
-                            &lt;video-card
+                <div class="video-list" v-loading="loading">
+                    <el-empty v-if="!loading && videos.length === 0" description="还没有记录，点击\"添加记录\"开始吧！"></el-empty>
+                    <el-row :gutter="12">
+                        <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="(video, index) in videos" :key="video.id" style="margin-bottom: 12px">
+                            <video-card
                                 :video="video"
                                 :index="index"
                                 @edit="editVideo"
                                 @delete="confirmDelete"
-                            &gt;&lt;/video-card&gt;
-                        &lt;/el-col&gt;
-                    &lt;/el-row&gt;
-                &lt;/div&gt;
-            &lt;/el-main&gt;
-        &lt;/el-container&gt;
+                            ></video-card>
+                        </el-col>
+                    </el-row>
+                </div>
+            </el-main>
+        </el-container>
         
-        &lt;el-dialog
+        <el-dialog
             v-model="dialogVisible"
             :title="editingVideo ? '编辑视频记录' : '添加视频记录'"
             width="600px"
             :close-on-click-modal="false"
             class="video-form-dialog"
             :close-on-press-escape="true"
-        &gt;
-            &lt;div class="form-container"&gt;
-                &lt;div class="form-group"&gt;
-                    &lt;label class="form-label required"&gt;标题&lt;/label&gt;
-                    &lt;el-input v-model="form.title" placeholder="请输入视频名称" class="form-input"&gt;&lt;/el-input&gt;
-                &lt;/div&gt;
+        >
+            <div class="form-container">
+                <div class="form-group">
+                    <label class="form-label required">标题</label>
+                    <el-input v-model="form.title" placeholder="请输入视频名称" class="form-input"></el-input>
+                </div>
                 
-                &lt;div class="form-row"&gt;
-                    &lt;div class="form-group"&gt;
-                        &lt;label class="form-label required"&gt;分类&lt;/label&gt;
-                        &lt;el-select v-model="form.category" class="form-select"&gt;
-                            &lt;el-option label="电视剧" value="电视剧"&gt;&lt;/el-option&gt;
-                            &lt;el-option label="电影" value="电影"&gt;&lt;/el-option&gt;
-                            &lt;el-option label="动漫" value="动漫"&gt;&lt;/el-option&gt;
-                            &lt;el-option label="综艺" value="综艺"&gt;&lt;/el-option&gt;
-                            &lt;el-option label="纪录片" value="纪录片"&gt;&lt;/el-option&gt;
-                            &lt;el-option label="其他" value="其他"&gt;&lt;/el-option&gt;
-                        &lt;/el-select&gt;
-                    &lt;/div&gt;
-                    &lt;div class="form-group"&gt;
-                        &lt;label class="form-label required"&gt;状态&lt;/label&gt;
-                        &lt;el-select v-model="form.status" class="form-select"&gt;
-                            &lt;el-option label="在看" value="在看"&gt;&lt;/el-option&gt;
-                            &lt;el-option label="已看完" value="已看完"&gt;&lt;/el-option&gt;
-                            &lt;el-option label="想看" value="想看"&gt;&lt;/el-option&gt;
-                            &lt;el-option label="弃剧" value="弃剧"&gt;&lt;/el-option&gt;
-                        &lt;/el-select&gt;
-                    &lt;/div&gt;
-                &lt;/div&gt;
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label required">分类</label>
+                        <el-select v-model="form.category" class="form-select">
+                            <el-option label="电视剧" value="电视剧"></el-option>
+                            <el-option label="电影" value="电影"></el-option>
+                            <el-option label="动漫" value="动漫"></el-option>
+                            <el-option label="综艺" value="综艺"></el-option>
+                            <el-option label="纪录片" value="纪录片"></el-option>
+                            <el-option label="其他" value="其他"></el-option>
+                        </el-select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">状态</label>
+                        <el-select v-model="form.status" class="form-select">
+                            <el-option label="在看" value="在看"></el-option>
+                            <el-option label="已看完" value="已看完"></el-option>
+                            <el-option label="想看" value="想看"></el-option>
+                            <el-option label="弃剧" value="弃剧"></el-option>
+                        </el-select>
+                    </div>
+                </div>
                 
-                &lt;div class="form-section"&gt;
-                    &lt;div class="section-title"&gt;📺 剧集进度&lt;/div&gt;
-                    &lt;div class="form-row"&gt;
-                        &lt;div class="form-group"&gt;
-                            &lt;label class="form-label"&gt;总集数&lt;/label&gt;
-                            &lt;el-input-number v-model="form.total_episodes" :min="0" class="form-input-number" placeholder="如: 24"&gt;&lt;/el-input-number&gt;
-                        &lt;/div&gt;
-                        &lt;div class="form-group"&gt;
-                            &lt;label class="form-label"&gt;当前看到&lt;/label&gt;
-                            &lt;el-input-number v-model="form.current_episode" :min="0" class="form-input-number" placeholder="如: 12"&gt;&lt;/el-input-number&gt;
-                        &lt;/div&gt;
-                        &lt;div class="form-group"&gt;
-                            &lt;label class="form-label"&gt;本集已看(分钟)&lt;/label&gt;
-                            &lt;el-input-number v-model="form.current_episode_minutes" :min="0" class="form-input-number" placeholder="如: 15"&gt;&lt;/el-input-number&gt;
-                        &lt;/div&gt;
-                    &lt;/div&gt;
-                &lt;/div&gt;
+                <div class="form-section">
+                    <div class="section-title">📺 剧集进度</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总集数</label>
+                            <el-input-number v-model="form.total_episodes" :min="0" class="form-input-number" placeholder="如: 24"></el-input-number>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">当前看到</label>
+                            <el-input-number v-model="form.current_episode" :min="0" class="form-input-number" placeholder="如: 12"></el-input-number>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">本集已看(分钟)</label>
+                            <el-input-number v-model="form.current_episode_minutes" :min="0" class="form-input-number" placeholder="如: 15"></el-input-number>
+                        </div>
+                    </div>
+                </div>
                 
-                &lt;div class="form-section"&gt;
-                    &lt;div class="section-title"&gt;🎬 时长进度（电影用）&lt;/div&gt;
-                    &lt;div class="form-row"&gt;
-                        &lt;div class="form-group"&gt;
-                            &lt;label class="form-label"&gt;总时长(分钟)&lt;/label&gt;
-                            &lt;el-input-number v-model="form.total_duration_min" :min="0" class="form-input-number" placeholder="如: 120"&gt;&lt;/el-input-number&gt;
-                        &lt;/div&gt;
-                        &lt;div class="form-group"&gt;
-                            &lt;label class="form-label"&gt;已看时长(分钟)&lt;/label&gt;
-                            &lt;el-input-number v-model="form.current_duration_min" :min="0" class="form-input-number" placeholder="如: 60"&gt;&lt;/el-input-number&gt;
-                        &lt;/div&gt;
-                    &lt;/div&gt;
-                &lt;/div&gt;
+                <div class="form-section">
+                    <div class="section-title">🎬 时长进度（电影用）</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总时长(分钟)</label>
+                            <el-input-number v-model="form.total_duration_min" :min="0" class="form-input-number" placeholder="如: 120"></el-input-number>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">已看时长(分钟)</label>
+                            <el-input-number v-model="form.current_duration_min" :min="0" class="form-input-number" placeholder="如: 60"></el-input-number>
+                        </div>
+                    </div>
+                </div>
                 
-                &lt;div class="form-group"&gt;
-                    &lt;label class="form-label"&gt;备注&lt;/label&gt;
-                    &lt;el-input v-model="form.note" type="textarea" :rows="3" placeholder="添加备注（可选）" class="form-textarea"&gt;&lt;/el-input&gt;
-                &lt;/div&gt;
-            &lt;/div&gt;
-            &lt;template #footer&gt;
-                &lt;el-button @click="dialogVisible = false"&gt;取消&lt;/el-button&gt;
-                &lt;el-button type="primary" @click="saveVideo" :loading="saving"&gt;保存&lt;/el-button&gt;
-            &lt;/template&gt;
-        &lt;/el-dialog&gt;
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <el-input v-model="form.note" type="textarea" :rows="3" placeholder="添加备注（可选）" class="form-textarea"></el-input>
+                </div>
+            </div>
+            <template #footer>
+                <el-button @click="dialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveVideo" :loading="saving">保存</el-button>
+            </template>
+        </el-dialog>
         
-        &lt;el-dialog
+        <el-dialog
             v-model="deleteDialogVisible"
             title="确认删除"
             width="450px"
             :close-on-press-escape="true"
             class="delete-confirm-dialog"
-        &gt;
-            &lt;div style="text-align: center; padding: 10px 0;"&gt;
-                &lt;p style="margin-bottom: 8px; font-size: 1rem;"&gt;确定要删除以下视频记录吗？&lt;/p&gt;
-                &lt;p style="font-weight: 600; color: #409EFF; font-size: 1.1rem; word-break: break-all;" v-text="deletingVideo ? deletingVideo.title : ''"&gt;&lt;/p&gt;
-                &lt;p style="margin-top: 8px; font-size: 0.85rem; color: #999;"&gt;此操作不可撤销&lt;/p&gt;
-            &lt;/div&gt;
-            &lt;template #footer&gt;
-                &lt;el-button @click="deleteDialogVisible = false"&gt;取消&lt;/el-button&gt;
-                &lt;el-button type="danger" @click="deleteVideo" :loading="deleting"&gt;删除&lt;/el-button&gt;
-            &lt;/template&gt;
-        &lt;/el-dialog&gt;
-    &lt;/div&gt;
+        >
+            <div style="text-align: center; padding: 10px 0;">
+                <p style="margin-bottom: 8px; font-size: 1rem;">确定要删除以下视频记录吗？</p>
+                <p style="font-weight: 600; color: #409EFF; font-size: 1.1rem; word-break: break-all;" v-text="deletingVideo ? deletingVideo.title : ''"></p>
+                <p style="margin-top: 8px; font-size: 0.85rem; color: #999;">此操作不可撤销</p>
+            </div>
+            <template #footer>
+                <el-button @click="deleteDialogVisible = false">取消</el-button>
+                <el-button type="danger" @click="deleteVideo" :loading="deleting">删除</el-button>
+            </template>
+        </el-dialog>
+    </div>
 {% endraw %}
     
-    &lt;script src="https://unpkg.com/vue@3/dist/vue.global.js"&gt;&lt;/script&gt;
-    &lt;script src="https://unpkg.com/element-plus"&gt;&lt;/script&gt;
-    &lt;script src="https://unpkg.com/@element-plus/icons-vue"&gt;&lt;/script&gt;
-    &lt;script src="/static/js/app.js"&gt;&lt;/script&gt;
-&lt;/body&gt;
-&lt;/html&gt;
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
