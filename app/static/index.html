@@ -114,13 +114,12 @@
                 <div v-show="activeTab === 'plan'">
                     <div class="plan-header">
                         <h2>想看的视频</h2>
-                        <button class="btn btn-primary" @click="openAddPlanModal()">+ 添加想看</button>
                     </div>
                     
                     <div class="video-list" v-if="!loading">
                         <div v-if="planVideos.length === 0" class="empty-state">
                             <div class="empty-icon">📋</div>
-                            <div class="empty-text">还没有想看的视频，点击上方按钮添加</div>
+                            <div class="empty-text">还没有想看的视频，点击右下角爱心添加</div>
                         </div>
                         <div class="video-grid">
                             <div class="video-card plan-card" v-for="video in planVideos" :key="video.id">
@@ -149,10 +148,23 @@
                 </div>
             </main>
             
-            <!-- 悬浮添加按钮 -->
-            <button class="fab-add" @click="openModal()" v-show="activeTab === 'main'">
+            <!-- 悬浮添加按钮 - 追剧记录 -->
+            <button class="fab-add fab-main" @click="openModal()" v-show="activeTab === 'main'">
                 <span class="fab-icon">+</span>
             </button>
+            
+            <!-- 悬浮添加按钮 - 想看 -->
+            <button class="fab-add fab-plan" @click="openAddPlanModal()" v-show="activeTab === 'plan'">
+                <span class="fab-icon">❤</span>
+            </button>
+            
+            <!-- Toast 提示 -->
+            <div v-if="toast.show" class="toast" :class="toast.type">
+                <div class="toast-content">
+                    <span class="toast-icon">{{ toast.icon }}</span>
+                    <span>{{ toast.message }}</span>
+                </div>
+            </div>
         </div>
         
         <!-- 添加/编辑弹窗 -->
@@ -287,7 +299,7 @@
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script>
-        const { createApp, ref, reactive, onMounted, watch, computed } = Vue;
+        const { createApp, ref, reactive, onMounted, watch, computed, nextTick } = Vue;
         
         const app = createApp({
             setup() {
@@ -303,6 +315,14 @@
                 const deletingVideo = ref(null);
                 const activeTab = ref('main');
                 let searchTimer = null;
+                let toastTimer = null;
+                
+                const toast = reactive({
+                    show: false,
+                    message: '',
+                    type: 'success',
+                    icon: '✅'
+                });
                 
                 const filters = reactive({
                     keyword: '',
@@ -327,6 +347,22 @@
                     category: '电视剧',
                     note: ''
                 });
+                
+                // 显示 toast
+                const showToast = (message, type = 'success') => {
+                    if (toastTimer) {
+                        clearTimeout(toastTimer);
+                    }
+                    
+                    toast.message = message;
+                    toast.type = type;
+                    toast.icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+                    toast.show = true;
+                    
+                    toastTimer = setTimeout(() => {
+                        toast.show = false;
+                    }, 2000);
+                };
                 
                 // 过滤视频
                 const mainVideos = computed(() => {
@@ -493,18 +529,18 @@
                         
                         if (!resp.ok) throw new Error('操作失败');
                         
-                        alert('已开始观看！');
+                        showToast('已开始观看！');
                         loadVideos();
                         activeTab.value = 'main';
                     } catch (e) {
                         console.error('保存失败:', e);
-                        alert('操作失败，请重试');
+                        showToast('操作失败，请重试', 'error');
                     }
                 };
                 
                 const validateForm = () => {
                     if (!form.title || form.title.trim() === '') {
-                        alert('请输入标题');
+                        showToast('请输入标题', 'error');
                         return false;
                     }
                     return true;
@@ -512,7 +548,7 @@
                 
                 const validatePlanForm = () => {
                     if (!planForm.title || planForm.title.trim() === '') {
-                        alert('请输入视频名称');
+                        showToast('请输入视频名称', 'error');
                         return false;
                     }
                     return true;
@@ -552,12 +588,12 @@
                         
                         if (!resp.ok) throw new Error('操作失败');
                         
-                        alert(editingVideo.value ? '更新成功' : '添加成功');
+                        showToast(editingVideo.value ? '更新成功' : '添加成功');
                         dialogVisible.value = false;
                         loadVideos();
                     } catch (e) {
                         console.error('保存失败:', e);
-                        alert('保存失败，请重试');
+                        showToast('保存失败，请重试', 'error');
                     } finally {
                         saving.value = false;
                     }
@@ -588,12 +624,12 @@
                         
                         if (!resp.ok) throw new Error('操作失败');
                         
-                        alert('添加成功！');
+                        showToast('添加成功！');
                         planDialogVisible.value = false;
                         loadVideos();
                     } catch (e) {
                         console.error('保存失败:', e);
-                        alert('保存失败，请重试');
+                        showToast('保存失败，请重试', 'error');
                     } finally {
                         saving.value = false;
                     }
@@ -616,11 +652,11 @@
                         const resp = await fetch('/api/videos/' + deletingVideo.value.id, { method: 'DELETE' });
                         if (!resp.ok) throw new Error('删除失败');
                         
-                        alert('删除成功');
+                        showToast('删除成功');
                         deleteDialogVisible.value = false;
                         loadVideos();
                     } catch (e) {
-                        alert('删除失败');
+                        showToast('删除失败', 'error');
                     } finally {
                         deleting.value = false;
                     }
@@ -635,6 +671,7 @@
                     dialogVisible, planDialogVisible, deleteDialogVisible, 
                     editingVideo, deletingVideo,
                     form, planForm, filters, activeTab,
+                    toast,
                     mainVideos, planVideos,
                     debounceLoadVideos, loadVideos, 
                     openModal, openAddPlanModal, startWatching,

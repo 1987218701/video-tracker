@@ -74,7 +74,7 @@ html, body {
 }
 
 .stat-total {
-    opacity: 0.8;
+    opacity: 0.7;
 }
 
 .stat-plan {
@@ -399,24 +399,82 @@ html, body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
-    color: white;
     border: none;
-    box-shadow: 0 4px 16px rgba(74, 144, 217, 0.4);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     transition: all 0.3s ease;
     z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fab-main {
+    background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
+}
+
+.fab-plan {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
 }
 
 .fab-add:hover {
-    transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 6px 20px rgba(74, 144, 217, 0.5);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .fab-icon {
-    font-size: 2.2rem;
+    font-size: 2rem;
     line-height: 1;
     font-weight: 300;
+    color: white;
+}
+
+/* ===================== Toast 提示 ===================== */
+.toast {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.toast-content {
+    background: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.toast-icon {
+    font-size: 1.2rem;
+}
+
+.toast.success .toast-content {
+    border-left: 4px solid #67c23a;
+}
+
+.toast.error .toast-content {
+    border-left: 4px solid #ef4444;
+}
+
+.toast.info .toast-content {
+    border-left: 4px solid #4a90d9;
 }
 
 /* ===================== 弹窗样式 ===================== */
@@ -666,7 +724,7 @@ html, body {
     }
     
     .fab-icon {
-        font-size: 2.4rem;
+        font-size: 2.2rem;
     }
 }
 
