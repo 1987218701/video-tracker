@@ -4,33 +4,48 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     color: #333;
     line-height: 1.6;
+    width: 100%;
 }
 
 #app {
     min-height: 100vh;
+    width: 100%;
 }
 
 .app-container {
     min-height: 100vh;
+    width: 100%;
+}
+
+.el-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.el-header {
+    padding: 0 !important;
+    height: auto !important;
 }
 
 .app-header {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    height: auto !important;
-    padding: 24px 20px !important;
+    padding: 24px 20px;
+    width: 100%;
 }
 
 .header-content {
     max-width: 1400px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .app-title {
@@ -74,19 +89,27 @@ body {
     color: #666;
 }
 
+.el-main {
+    padding: 0 !important;
+    flex: 1;
+}
+
 .app-main {
     max-width: 1400px;
     margin: 0 auto;
-    padding: 24px 20px !important;
+    padding: 24px 20px;
+    width: 100%;
 }
 
 .toolbar-card {
     margin-bottom: 24px;
     border-radius: 12px;
+    width: 100%;
 }
 
 .toolbar {
     align-items: center;
+    width: 100%;
 }
 
 .add-btn-col {
@@ -102,12 +125,19 @@ body {
 
 .video-list {
     min-height: 200px;
+    width: 100%;
+}
+
+.el-row {
+    width: 100%;
+    margin: 0 !important;
 }
 
 .video-card {
     border-radius: 12px;
     transition: all 0.3s ease;
     height: 100%;
+    width: 100%;
 }
 
 .video-card:hover {
@@ -181,4 +211,12 @@ body {
     justify-content: flex-end;
     padding-top: 12px;
     border-top: 1px solid #f0f0f0;
+}
+
+.el-col {
+    padding: 10px;
+}
+
+.el-card__body {
+    padding: 20px !important;
 }
