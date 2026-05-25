@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 视频追剧记录</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <style>
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <el-container class="app-container">
+            <el-header class="app-header">
+                <div class="header-content">
+                    <h1 class="app-title">🎬 视频追剧记录</h1>
+                    <div class="stats-bar">
+                        <div class="stat-card" style="--stat-color: #409EFF">
+                            <div class="stat-value" style="color: #409EFF">{{ stats.total }}</div>
+                            <div class="stat-label">总计</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: #409EFF">
+                            <div class="stat-value" style="color: #409EFF">{{ stats.watching }}</div>
+                            <div class="stat-label">在看</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: #67C23A">
+                            <div class="stat-value" style="color: #67C23A">{{ stats.completed }}</div>
+                            <div class="stat-label">已看完</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: #E6A23C">
+                            <div class="stat-value" style="color: #E6A23C">{{ stats.plan }}</div>
+                            <div class="stat-label">想看</div>
+                        </div>
+                        <div class="stat-card" style="--stat-color: #F56C6C">
+                            <div class="stat-value" style="color: #F56C6C">{{ stats.dropped }}</div>
+                            <div class="stat-label">弃剧</div>
+                        </div>
+                    </div>
+                </div>
+            </el-header>
+            
+            <el-main class="app-main">
+                <el-card class="toolbar-card" shadow="hover">
+                    <el-row :gutter="12" class="toolbar">
+                        <el-col :xs="24" :sm="12" :md="8">
+                            <el-input v-model="filters.keyword" placeholder="搜索视频名称..." prefix-icon="Search" clearable @input="debounceLoadVideos"></el-input>
+                        </el-col>
+                        <el-col :xs="12" :sm="6" :md="4">
+                            <el-select v-model="filters.category" placeholder="全部分类" clearable style="width: 100%" @change="loadVideos">
+                                <el-option label="电视剧" value="电视剧"></el-option>
+                                <el-option label="电影" value="电影"></el-option>
+                                <el-option label="动漫" value="动漫"></el-option>
+                                <el-option label="综艺" value="综艺"></el-option>
+                                <el-option label="纪录片" value="纪录片"></el-option>
+                                <el-option label="其他" value="其他"></el-option>
+                            </el-select>
+                        </el-col>
+                        <el-col :xs="12" :sm="6" :md="4">
+                            <el-select v-model="filters.status" placeholder="全部状态" clearable style="width: 100%" @change="loadVideos">
+                                <el-option label="在看" value="在看"></el-option>
+                                <el-option label="已看完" value="已看完"></el-option>
+                                <el-option label="想看" value="想看"></el-option>
+                                <el-option label="弃剧" value="弃剧"></el-option>
+                            </el-select>
+                        </el-col>
+                        <el-col :xs="24" :sm="24" :md="8" class="add-btn-col">
+                            <el-button type="primary" @click="openModal()">➕ 添加记录</el-button>
+                        </el-col>
+                    </el-row>
+                </el-card>
+                
+                <div class="video-list" v-loading="loading">
+                    <el-empty v-if="!loading && videos.length === 0" description="还没有记录，点击\"添加记录\"开始吧！"></el-empty>
+                    <el-row :gutter="12">
+                        <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="(video, index) in videos" :key="video.id" style="margin-bottom: 12px">
+                            <el-card shadow="hover" class="video-card fade-in">
+                                <div class="card-header">
+                                    <div class="card-title">
+                                        <span class="category-icon" style="color: #409EFF; margin-right: 8px; font-size: 1.2rem;">{{ getCategoryIcon(video.category) }}</span>
+                                        <span class="title-text">{{ video.title }}</span>
+                                    </div>
+                                    <el-tag :type="getStatusType(video.status)" effect="dark" size="small">{{ video.status }}</el-tag>
+                                </div>
+                                <div class="card-content">
+                                    <div class="meta-line">
+                                        <el-tag size="small" type="info">{{ video.category }}</el-tag>
+                                        <span v-if="video.note" class="note-text" :title="video.note">📝 {{ video.note.length > 15 ? video.note.slice(0, 15) + '...' : video.note }}</span>
+                                    </div>
+                                    <div class="progress-line">
+                                        <span class="progress-value">{{ getProgressText(video) }}</span>
+                                        <span class="progress-label">{{ getProgressLabel(video) }}</span>
+                                    </div>
+                                </div>
+                                <div class="card-actions">
+                                    <el-button type="primary" size="small" @click="editVideo(video)" plain>✏️ 编辑</el-button>
+                                    <el-button type="danger" size="small" @click="confirmDelete(video)" plain>🗑️ 删除</el-button>
+                                </div>
+                            </el-card>
+                        </el-col>
+                    </el-row>
+                </div>
+            </el-main>
+        </el-container>
+        
+        <el-dialog v-model="dialogVisible" :title="editingVideo ? '编辑视频记录' : '添加视频记录'" width="600px" :close-on-click-modal="false" class="video-form-dialog" :close-on-press-escape="true">
+            <div class="form-container">
+                <div class="form-group">
+                    <label class="form-label required">标题</label>
+                    <el-input v-model="form.title" placeholder="请输入视频名称" class="form-input"></el-input>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label required">分类</label>
+                        <el-select v-model="form.category" class="form-select">
+                            <el-option label="电视剧" value="电视剧"></el-option>
+                            <el-option label="电影" value="电影"></el-option>
+                            <el-option label="动漫" value="动漫"></el-option>
+                            <el-option label="综艺" value="综艺"></el-option>
+                            <el-option label="纪录片" value="纪录片"></el-option>
+                            <el-option label="其他" value="其他"></el-option>
+                        </el-select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">状态</label>
+                        <el-select v-model="form.status" class="form-select">
+                            <el-option label="在看" value="在看"></el-option>
+                            <el-option label="已看完" value="已看完"></el-option>
+                            <el-option label="想看" value="想看"></el-option>
+                            <el-option label="弃剧" value="弃剧"></el-option>
+                        </el-select>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="section-title">📺 剧集进度</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总集数</label>
+                            <el-input-number v-model="form.total_episodes" :min="0" class="form-input-number" placeholder="如: 24"></el-input-number>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">当前看到</label>
+                            <el-input-number v-model="form.current_episode" :min="0" class="form-input-number" placeholder="如: 12"></el-input-number>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">本集已看(分钟)</label>
+                            <el-input-number v-model="form.current_episode_minutes" :min="0" class="form-input-number" placeholder="如: 15"></el-input-number>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="section-title">🎬 时长进度（电影用）</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总时长(分钟)</label>
+                            <el-input-number v-model="form.total_duration_min" :min="0" class="form-input-number" placeholder="如: 120"></el-input-number>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">已看时长(分钟)</label>
+                            <el-input-number v-model="form.current_duration_min" :min="0" class="form-input-number" placeholder="如: 60"></el-input-number>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <el-input v-model="form.note" type="textarea" :rows="3" placeholder="添加备注（可选）" class="form-textarea"></el-input>
+                </div>
+            </div>
+            <template #footer>
+                <el-button @click="dialogVisible = false">取消</el-button>
+                <el-button type="primary" @click="saveVideo" :loading="saving">保存</el-button>
+            </template>
+        </el-dialog>
+        
+        <el-dialog v-model="deleteDialogVisible" title="确认删除" width="450px" :close-on-press-escape="true" class="delete-confirm-dialog">
+            <div style="text-align: center; padding: 10px 0;">
+                <p style="margin-bottom: 8px; font-size: 1rem;">确定要删除以下视频记录吗？</p>
+                <p style="font-weight: 600; color: #409EFF; font-size: 1.1rem; word-break: break-all;">{{ deletingVideo ? deletingVideo.title : '' }}</p>
+                <p style="margin-top: 8px; font-size: 0.85rem; color: #999;">此操作不可撤销</p>
+            </div>
+            <template #footer>
+                <el-button @click="deleteDialogVisible = false">取消</el-button>
+                <el-button type="danger" @click="deleteVideo" :loading="deleting">删除</el-button>
+            </template>
+        </el-dialog>
+    </div>
+    
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const { createApp, ref, reactive, computed, onMounted } = Vue;
+            const { ElMessage } = ElementPlus;
+            
+            const app = createApp({
+                setup() {
+                    const videos = ref([]);
+                    const stats = ref({ total: 0, watching: 0, completed: 0, plan: 0, dropped: 0 });
+                    const loading = ref(false);
+                    const saving = ref(false);
+                    const deleting = ref(false);
+                    const dialogVisible = ref(false);
+                    const deleteDialogVisible = ref(false);
+                    const editingVideo = ref(null);
+                    const deletingVideo = ref(null);
+                    let searchTimer = null;
+                    
+                    const filters = reactive({
+                        keyword: '',
+                        category: '',
+                        status: ''
+                    });
+                    
+                    const form = reactive({
+                        title: '',
+                        category: '电视剧',
+                        status: '在看',
+                        total_episodes: null,
+                        current_episode: null,
+                        total_duration_min: null,
+                        current_duration_min: null,
+                        current_episode_minutes: null,
+                        note: ''
+                    });
+                    
+                    const getCategoryIcon = (category) => {
+                        const icons = { '电视剧': '📺', '电影': '🎬', '动漫': '🎮', '综艺': '🎤', '纪录片': '📄' };
+                        return icons[category] || '📹';
+                    };
+                    
+                    const getStatusType = (status) => {
+                        const types = { '在看': 'primary', '已看完': 'success', '想看': 'warning', '弃剧': 'danger' };
+                        return types[status] || 'info';
+                    };
+                    
+                    const getProgressText = (video) => {
+                        if (video.total_episodes) {
+                            let text = (video.current_episode || 0) + '/' + video.total_episodes;
+                            if (video.current_episode_minutes) text += ' (' + video.current_episode_minutes + '分钟)';
+                            return text;
+                        }
+                        if (video.total_duration_min) {
+                            return (video.current_duration_min || 0) + '/' + video.total_duration_min;
+                        }
+                        return '-';
+                    };
+                    
+                    const getProgressLabel = (video) => {
+                        if (video.total_episodes) return '集数';
+                        if (video.total_duration_min) return '分钟';
+                        return '无进度';
+                    };
+                    
+                    const loadStats = async () => {
+                        try {
+                            const resp = await fetch('/api/videos/stats');
+                            const data = await resp.json();
+                            stats.value = data;
+                        } catch (e) {
+                            console.error('加载统计失败:', e);
+                        }
+                    };
+                    
+                    const loadVideos = async () => {
+                        loading.value = true;
+                        try {
+                            let url = '/api/videos';
+                            const params = new URLSearchParams();
+                            if (filters.keyword) params.set('keyword', filters.keyword);
+                            if (filters.category) params.set('category', filters.category);
+                            if (filters.status) params.set('status', filters.status);
+                            if (params.toString()) url += '?' + params.toString();
+                            
+                            const resp = await fetch(url);
+                            const data = await resp.json();
+                            videos.value = data;
+                            await loadStats();
+                        } catch (e) {
+                            console.error('加载失败:', e);
+                            ElMessage.error('加载失败，请重试');
+                        } finally {
+                            loading.value = false;
+                        }
+                    };
+                    
+                    const debounceLoadVideos = () => {
+                        if (searchTimer) clearTimeout(searchTimer);
+                        searchTimer = setTimeout(loadVideos, 300);
+                    };
+                    
+                    const openModal = (video) => {
+                        editingVideo.value = video || null;
+                        if (video) {
+                            form.title = video.title;
+                            form.category = video.category;
+                            form.status = video.status;
+                            form.total_episodes = video.total_episodes;
+                            form.current_episode = video.current_episode;
+                            form.total_duration_min = video.total_duration_min;
+                            form.current_duration_min = video.current_duration_min;
+                            form.current_episode_minutes = video.current_episode_minutes;
+                            form.note = video.note || '';
+                        } else {
+                            form.title = '';
+                            form.category = '电视剧';
+                            form.status = '在看';
+                            form.total_episodes = null;
+                            form.current_episode = null;
+                            form.total_duration_min = null;
+                            form.current_duration_min = null;
+                            form.current_episode_minutes = null;
+                            form.note = '';
+                        }
+                        dialogVisible.value = true;
+                    };
+                    
+                    const validateForm = () => {
+                        if (!form.title || form.title.trim() === '') {
+                            ElMessage.error('请输入标题');
+                            return false;
+                        }
+                        return true;
+                    };
+                    
+                    const saveVideo = async () => {
+                        if (!validateForm()) return;
+                        
+                        saving.value = true;
+                        try {
+                            const data = {
+                                title: form.title.trim(),
+                                category: form.category,
+                                status: form.status,
+                                total_episodes: form.total_episodes,
+                                current_episode: form.current_episode,
+                                total_duration_min: form.total_duration_min,
+                                current_duration_min: form.current_duration_min,
+                                current_episode_minutes: form.current_episode_minutes,
+                                note: form.note.trim()
+                            };
+                            
+                            let url, method;
+                            if (editingVideo.value) {
+                                url = '/api/videos/' + editingVideo.value.id;
+                                method = 'PUT';
+                            } else {
+                                url = '/api/videos';
+                                method = 'POST';
+                            }
+                            
+                            const resp = await fetch(url, {
+                                method: method,
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(data)
+                            });
+                            
+                            if (!resp.ok) throw new Error('操作失败');
+                            
+                            ElMessage.success(editingVideo.value ? '更新成功' : '添加成功');
+                            dialogVisible.value = false;
+                            loadVideos();
+                        } catch (e) {
+                            console.error('保存失败:', e);
+                            ElMessage.error('保存失败，请重试');
+                        } finally {
+                            saving.value = false;
+                        }
+                    };
+                    
+                    const editVideo = (video) => {
+                        openModal(video);
+                    };
+                    
+                    const confirmDelete = (video) => {
+                        deletingVideo.value = video;
+                        deleteDialogVisible.value = true;
+                    };
+                    
+                    const deleteVideo = async () => {
+                        if (!deletingVideo.value) return;
+                        
+                        deleting.value = true;
+                        try {
+                            const resp = await fetch('/api/videos/' + deletingVideo.value.id, { method: 'DELETE' });
+                            if (!resp.ok) throw new Error('删除失败');
+                            
+                            ElMessage.success('删除成功');
+                            deleteDialogVisible.value = false;
+                            loadVideos();
+                        } catch (e) {
+                            ElMessage.error('删除失败');
+                        } finally {
+                            deleting.value = false;
+                        }
+                    };
+                    
+                    onMounted(() => {
+                        loadVideos();
+                    });
+                    
+                    return {
+                        videos, stats, loading, saving, deleting,
+                        dialogVisible, deleteDialogVisible, editingVideo, deletingVideo,
+                        form, filters,
+                        debounceLoadVideos, loadVideos, openModal, saveVideo, editVideo, confirmDelete, deleteVideo,
+                        getCategoryIcon, getStatusType, getProgressText, getProgressLabel
+                    };
+                }
+            });
+            
+            app.use(ElementPlus);
+            app.mount('#app');
+        });
+    </script>
+</body>
+</html>

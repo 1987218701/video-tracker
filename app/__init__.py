@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from flask import Flask, render_template, jsonify
+from flask import Flask, send_from_directory, jsonify
 from flask_cors import CORS
 
 load_dotenv()
@@ -15,13 +15,6 @@ def create_app():
                 template_folder=template_dir,
                 static_folder=static_dir)
     
-    # 修改 Jinja2 分隔符，避免与 Vue 冲突
-    app.jinja_env.variable_start_string = '{@'
-    app.jinja_env.variable_end_string = '@}'
-    app.jinja_env.block_start_string = '{%%'
-    app.jinja_env.block_end_string = '%%}'
-    app.jinja_env.comment_start_string = '{#'
-    app.jinja_env.comment_end_string = '#}'
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
     app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
 
@@ -42,7 +35,7 @@ def create_app():
 
     @app.route('/')
     def index():
-        return render_template('index.html')
+        return send_from_directory(static_dir, 'index.html')
 
     @app.route('/health')
     def health():
