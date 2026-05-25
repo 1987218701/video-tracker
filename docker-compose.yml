@@ -1,0 +1,16 @@
+services:
+  video-tracker:
+    build: .
+    container_name: video-tracker
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - tracker-data:/data
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_PATH=/data/videos.db
+      - SECRET_KEY=${SECRET_KEY:-please-change-this-secret}
+
+volumes:
+  tracker-data:

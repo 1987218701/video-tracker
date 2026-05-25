@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频追剧记录</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 视频追剧记录</h1>
+            <div class="stats-bar" id="statsBar">
+                <span class="stat-item">总计: <strong id="statTotal">0</strong></span>
+                <span class="stat-item watching">在看: <strong id="statWatching">0</strong></span>
+                <span class="stat-item completed">已看完: <strong id="statCompleted">0</strong></span>
+                <span class="stat-item plan">想看: <strong id="statPlan">0</strong></span>
+                <span class="stat-item dropped">弃剧: <strong id="statDropped">0</strong></span>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索视频名称..." oninput="debounceSearch()">
+            </div>
+            <div class="filter-group">
+                <select id="filterCategory" onchange="loadVideos()">
+                    <option value="">全部分类</option>
+                    <option value="电视剧">电视剧</option>
+                    <option value="电影">电影</option>
+                    <option value="动漫">动漫</option>
+                    <option value="综艺">综艺</option>
+                    <option value="纪录片">纪录片</option>
+                    <option value="其他">其他</option>
+                </select>
+                <select id="filterStatus" onchange="loadVideos()">
+                    <option value="">全部状态</option>
+                    <option value="在看">在看</option>
+                    <option value="已看完">已看完</option>
+                    <option value="想看">想看</option>
+                    <option value="弃剧">弃剧</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="openModal()">+ 添加记录</button>
+        </div>
+
+        <div class="video-list" id="videoList">
+            <div class="empty-state">
+                <p>还没有记录，点击"添加记录"开始吧！</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑模态框 -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">添加视频记录</h2>
+                <button class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="videoForm" onsubmit="saveVideo(event)">
+                <input type="hidden" id="videoId">
+                <div class="form-group">
+                    <label for="title">标题 *</label>
+                    <input type="text" id="title" required placeholder="视频名称">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="category">分类</label>
+                        <select id="category">
+                            <option value="电视剧">电视剧</option>
+                            <option value="电影">电影</option>
+                            <option value="动漫">动漫</option>
+                            <option value="综艺">综艺</option>
+                            <option value="纪录片">纪录片</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">状态</label>
+                        <select id="status">
+                            <option value="在看">在看</option>
+                            <option value="已看完">已看完</option>
+                            <option value="想看">想看</option>
+                            <option value="弃剧">弃剧</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="total_episodes">总集数</label>
+                        <input type="number" id="total_episodes" min="0" placeholder="如: 24">
+                    </div>
+                    <div class="form-group">
+                        <label for="current_episode">当前看到</label>
+                        <input type="number" id="current_episode" min="0" placeholder="如: 12">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="total_duration_min">总时长(分钟)</label>
+                        <input type="number" id="total_duration_min" min="0" placeholder="电影用">
+                    </div>
+                    <div class="form-group">
+                        <label for="current_duration_min">已看时长(分钟)</label>
+                        <input type="number" id="current_duration_min" min="0" placeholder="电影用">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rating">评分 (1-10)</label>
+                        <input type="number" id="rating" min="1" max="10" placeholder="1-10">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="note">备注</label>
+                    <textarea id="note" rows="2" placeholder="可选备注"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div class="modal-overlay" id="deleteOverlay" onclick="closeDeleteOutside(event)">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h2>确认删除</h2>
+                <button class="btn-close" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <p class="delete-msg">确定要删除「<strong id="deleteVideoName"></strong>」吗？此操作不可撤销。</p>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
