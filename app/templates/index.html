@@ -86,74 +86,83 @@
             class="video-form-dialog"
             :close-on-press-escape="true"
         >
-            <el-form :model="form" ref="formRef" :rules="rules" label-position="right" label-width="100px">
-                <el-form-item label="标题" prop="title">
-                    <el-input v-model="form.title" placeholder="视频名称"></el-input>
-                </el-form-item>
-                <el-row :gutter="20">
-                    <el-col :span="12">
-                        <el-form-item label="分类" prop="category">
-                            <el-select v-model="form.category" style="width: 100%">
-                                <el-option label="电视剧" value="电视剧"></el-option>
-                                <el-option label="电影" value="电影"></el-option>
-                                <el-option label="动漫" value="动漫"></el-option>
-                                <el-option label="综艺" value="综艺"></el-option>
-                                <el-option label="纪录片" value="纪录片"></el-option>
-                                <el-option label="其他" value="其他"></el-option>
-                            </el-select>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="状态" prop="status">
-                            <el-select v-model="form.status" style="width: 100%">
-                                <el-option label="在看" value="在看"></el-option>
-                                <el-option label="已看完" value="已看完"></el-option>
-                                <el-option label="想看" value="想看"></el-option>
-                                <el-option label="弃剧" value="弃剧"></el-option>
-                            </el-select>
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-                <el-divider content-position="left">剧集进度</el-divider>
-                <el-row :gutter="20">
-                    <el-col :span="12">
-                        <el-form-item label="总集数">
-                            <el-input-number v-model="form.total_episodes" :min="0" style="width: 100%" placeholder="如: 24"></el-input-number>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="当前看到">
-                            <el-input-number v-model="form.current_episode" :min="0" style="width: 100%" placeholder="如: 12"></el-input-number>
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-                <el-divider content-position="left">时长进度（电影用）</el-divider>
-                <el-row :gutter="20">
-                    <el-col :span="12">
-                        <el-form-item label="总时长">
-                            <el-input-number v-model="form.total_duration_min" :min="0" style="width: 100%" placeholder="分钟"></el-input-number>
-                        </el-form-item>
-                    </el-col>
-                    <el-col :span="12">
-                        <el-form-item label="已看时长">
-                            <el-input-number v-model="form.current_duration_min" :min="0" style="width: 100%" placeholder="分钟"></el-input-number>
-                        </el-form-item>
-                    </el-col>
-                </el-row>
-                <el-form-item label="评分">
-                    <el-rate
-                        v-model="form.rating"
-                        :max="10"
-                        show-score
-                        text-color="#ff9900"
-                        score-template="{value}"
-                        allow-half
-                    ></el-rate>
-                </el-form-item>
-                <el-form-item label="备注">
-                    <el-input v-model="form.note" type="textarea" :rows="3" placeholder="可选备注"></el-input>
-                </el-form-item>
-            </el-form>
+            <div class="form-container">
+                <div class="form-group">
+                    <label class="form-label required">标题</label>
+                    <el-input v-model="form.title" placeholder="请输入视频名称" class="form-input"></el-input>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label required">分类</label>
+                        <el-select v-model="form.category" class="form-select">
+                            <el-option label="电视剧" value="电视剧"></el-option>
+                            <el-option label="电影" value="电影"></el-option>
+                            <el-option label="动漫" value="动漫"></el-option>
+                            <el-option label="综艺" value="综艺"></el-option>
+                            <el-option label="纪录片" value="纪录片"></el-option>
+                            <el-option label="其他" value="其他"></el-option>
+                        </el-select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label required">状态</label>
+                        <el-select v-model="form.status" class="form-select">
+                            <el-option label="在看" value="在看"></el-option>
+                            <el-option label="已看完" value="已看完"></el-option>
+                            <el-option label="想看" value="想看"></el-option>
+                            <el-option label="弃剧" value="弃剧"></el-option>
+                        </el-select>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="section-title">📺 剧集进度</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总集数</label>
+                            <el-input-number v-model="form.total_episodes" :min="0" class="form-input-number" placeholder="如: 24"></el-input-number>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">当前看到</label>
+                            <el-input-number v-model="form.current_episode" :min="0" class="form-input-number" placeholder="如: 12"></el-input-number>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <div class="section-title">🎬 时长进度（电影用）</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总时长(分钟)</label>
+                            <el-input-number v-model="form.total_duration_min" :min="0" class="form-input-number" placeholder="如: 120"></el-input-number>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">已看时长(分钟)</label>
+                            <el-input-number v-model="form.current_duration_min" :min="0" class="form-input-number" placeholder="如: 60"></el-input-number>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">⭐ 评分</label>
+                    <div class="rating-container">
+                        <el-rate
+                            v-model="form.rating"
+                            :max="10"
+                            show-score
+                            text-color="#ff9900"
+                            score-template="{value}分"
+                            allow-half
+                            class="form-rate"
+                        ></el-rate>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">备注</label>
+                    <el-input v-model="form.note" type="textarea" :rows="3" placeholder="添加备注（可选）" class="form-textarea"></el-input>
+                </div>
+            </div>
             <template #footer>
                 <el-button @click="dialogVisible = false">取消</el-button>
                 <el-button type="primary" @click="saveVideo" :loading="saving">保存</el-button>
