@@ -11,6 +11,7 @@
     </style>
 </head>
 <body>
+{% raw %}
     <div id="app" v-cloak>
         <el-container class="app-container">
             <el-header class="app-header">
@@ -162,13 +163,14 @@
             title="确认删除"
             width="450px"
         >
-            <p>确定要删除「<strong>{{ deletingVideo?.title }}</strong>」吗？此操作不可撤销。</p>
+            <p>确定要删除「<strong v-text="deletingVideo ? deletingVideo.title : ''"></strong>」吗？此操作不可撤销。</p>
             <template #footer>
                 <el-button @click="deleteDialogVisible = false">取消</el-button>
                 <el-button type="danger" @click="deleteVideo" :loading="deleting">删除</el-button>
             </template>
         </el-dialog>
     </div>
+{% endraw %}
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/element-plus"></script>
