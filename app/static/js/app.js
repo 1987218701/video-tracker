@@ -1,258 +1,318 @@
-// ===== 全局状态 =====
-let editingId = null;
-let deletingId = null;
-let searchTimer = null;
+const { createApp, ref, reactive, computed, watch, onMounted } = Vue;
+const { ElMessage, ElMessageBox } = ElementPlus;
 
-// ===== 初始化 =====
-document.addEventListener('DOMContentLoaded', () => {
-    loadVideos();
-    loadStats();
-});
+const StatCard = {
+    props: ['label', 'value', 'color'],
+    template: `
+        <div class="stat-card" :style="{ borderColor: color }">
+            <div class="stat-value" :style="{ color: color }">{{ value }}</div>
+            <div class="stat-label">{{ label }}</div>
+        </div>
+    `
+};
 
-// ===== Toast 提示 =====
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-}
+const VideoCard = {
+    props: ['video'],
+    emits: ['edit', 'delete'],
+    setup(props, { emit }) {
+        const getProgress = (v) => {
+            if (v.total_episodes) {
+                const current = v.current_episode || 0;
+                return { value: `${current}/${v.total_episodes}`, label: '集数' };
+            }
+            if (v.total_duration_min) {
+                const current = v.current_duration_min || 0;
+                return { value: `${current}/${v.total_duration_min}`, label: '分钟' };
+            }
+            return { value: '-', label: '无进度' };
+        };
 
-// ===== 防抖搜索 =====
-function debounceSearch() {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => loadVideos(), 300);
-}
+        const progress = computed(() => getProgress(props.video));
 
-// ===== 加载统计数据 =====
-async function loadStats() {
-    try {
-        const res = await fetch('/api/videos/stats');
-        const stats = await res.json();
-        document.getElementById('statTotal').textContent = stats.total;
-        document.getElementById('statWatching').textContent = stats.watching;
-        document.getElementById('statCompleted').textContent = stats.completed;
-        document.getElementById('statPlan').textContent = stats.plan;
-        document.getElementById('statDropped').textContent = stats.dropped;
-    } catch (e) {
-        console.error('加载统计失败:', e);
-    }
-}
+        const getStatusType = (status) => {
+            const map = {
+                '在看': 'primary',
+                '已看完': 'success',
+                '想看': 'warning',
+                '弃剧': 'danger'
+            };
+            return map[status] || 'info';
+        };
 
-// ===== 加载视频列表 =====
-async function loadVideos() {
-    const keyword = document.getElementById('searchInput').value;
-    const category = document.getElementById('filterCategory').value;
-    const status = document.getElementById('filterStatus').value;
+        const getCategoryIcon = (category) => {
+            const map = {
+                '电视剧': 'VideoCamera',
+                '电影': 'Film',
+                '动漫': 'Monitor',
+                '综艺': 'Tickets',
+                '纪录片': 'Document'
+            };
+            return map[category] || 'VideoPlay';
+        };
 
-    const params = new URLSearchParams();
-    if (keyword) params.set('keyword', keyword);
-    if (category) params.set('category', category);
-    if (status) params.set('status', status);
-
-    try {
-        const res = await fetch(`/api/videos?${params.toString()}`);
-        const videos = await res.json();
-        renderVideos(videos);
-        loadStats();
-    } catch (e) {
-        console.error('加载失败:', e);
-        showToast('加载失败，请重试', 'error');
-    }
-}
-
-// ===== 渲染视频列表 =====
-function renderVideos(videos) {
-    const container = document.getElementById('videoList');
-
-    if (videos.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <p>没有找到记录</p>
+        return {
+            progress,
+            getStatusType,
+            getCategoryIcon
+        };
+    },
+    template: `
+        <el-card shadow="hover" class="video-card" :body-style="{ padding: '20px' }">
+            <div class="card-header">
+                <div class="card-title">
+                    <el-icon class="category-icon" style="color: #409EFF; margin-right: 8px;">
+                        <component :is="getCategoryIcon(video.category)"></component>
+                    </el-icon>
+                    <span class="title-text" :title="video.title">{{ video.title }}</span>
+                </div>
+                <el-tag :type="getStatusType(video.status)" effect="dark" size="small">
+                    {{ video.status }}
+                </el-tag>
             </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = videos.map(v => {
-        const progress = getProgressText(v);
-        const rating = v.rating ? `⭐ ${v.rating}` : '';
-        const note = v.note ? `<span title="${escapeHtml(v.note)}">📝</span>` : '';
-
-        return `
-            <div class="video-card">
-                <div class="video-info">
-                    <div class="video-title" title="${escapeHtml(v.title)}">${escapeHtml(v.title)} ${note}</div>
-                    <div class="video-meta">
-                        <span class="category-tag">${escapeHtml(v.category)}</span>
-                        ${v.note ? `<span>${escapeHtml(truncate(v.note, 30))}</span>` : ''}
-                    </div>
+            <div class="card-content">
+                <div class="meta-line">
+                    <el-tag size="small" type="info">{{ video.category }}</el-tag>
+                    <span v-if="video.note" class="note-text" :title="video.note">
+                        📝 {{ video.note.length > 15 ? video.note.slice(0, 15) + '...' : video.note }}
+                    </span>
                 </div>
-                <div class="video-progress">
-                    <div class="progress-text">${progress.value}</div>
-                    <div class="progress-label">${progress.label}</div>
+                <div class="progress-line">
+                    <span class="progress-value">{{ progress.value }}</span>
+                    <span class="progress-label">{{ progress.label }}</span>
                 </div>
-                <div class="video-status">
-                    <span class="status-badge ${escapeHtml(v.status)}">${escapeHtml(v.status)}</span>
-                </div>
-                ${rating ? `<div class="video-rating">${rating}</div>` : ''}
-                <div class="video-actions">
-                    <button class="btn btn-sm btn-secondary" onclick="editVideo(${v.id})">编辑</button>
-                    <button class="btn btn-sm btn-danger" onclick="confirmDelete(${v.id}, '${escapeHtml(v.title)}')">删除</button>
+                <div v-if="video.rating" class="rating-line">
+                    <el-rate
+                        v-model="video.rating"
+                        disabled
+                        :max="10"
+                        show-score
+                        text-color="#ff9900"
+                        score-template="{value}"
+                    ></el-rate>
                 </div>
             </div>
-        `;
-    }).join('');
-}
+            <div class="card-actions">
+                <el-button type="primary" size="small" @click="$emit('edit', video)" plain>
+                    <el-icon><Edit /></el-icon> 编辑
+                </el-button>
+                <el-button type="danger" size="small" @click="$emit('delete', video)" plain>
+                    <el-icon><Delete /></el-icon> 删除
+                </el-button>
+            </div>
+        </el-card>
+    `
+};
 
-// ===== 获取进度文本 =====
-function getProgressText(v) {
-    if (v.total_episodes) {
-        const current = v.current_episode || 0;
-        return {
-            value: `${current}/${v.total_episodes}`,
-            label: '集数进度'
-        };
-    }
-    if (v.total_duration_min) {
-        const current = v.current_duration_min || 0;
-        return {
-            value: `${current}/${v.total_duration_min}`,
-            label: '时长(分钟)'
-        };
-    }
-    return { value: '-', label: '无进度' };
-}
+const app = createApp({
+    components: {
+        StatCard,
+        VideoCard
+    },
+    setup() {
+        const videos = ref([]);
+        const stats = ref({ total: 0, watching: 0, completed: 0, plan: 0, dropped: 0 });
+        const loading = ref(false);
+        const saving = ref(false);
+        const deleting = ref(false);
+        const dialogVisible = ref(false);
+        const deleteDialogVisible = ref(false);
+        const editingVideo = ref(null);
+        const deletingVideo = ref(null);
+        const formRef = ref(null);
+        let searchTimer = null;
 
-// ===== 模态框操作 =====
-function openModal(video = null) {
-    editingId = video ? video.id : null;
-    document.getElementById('modalTitle').textContent = video ? '编辑视频记录' : '添加视频记录';
-    document.getElementById('videoId').value = video ? video.id : '';
-    document.getElementById('title').value = video ? video.title : '';
-    document.getElementById('category').value = video ? video.category : '电视剧';
-    document.getElementById('status').value = video ? video.status : '在看';
-    document.getElementById('total_episodes').value = video && video.total_episodes ? video.total_episodes : '';
-    document.getElementById('current_episode').value = video && video.current_episode ? video.current_episode : '';
-    document.getElementById('total_duration_min').value = video && video.total_duration_min ? video.total_duration_min : '';
-    document.getElementById('current_duration_min').value = video && video.current_duration_min ? video.current_duration_min : '';
-    document.getElementById('rating').value = video && video.rating ? video.rating : '';
-    document.getElementById('note').value = video ? (video.note || '') : '';
-    document.getElementById('modalOverlay').classList.add('active');
-}
-
-function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('active');
-    editingId = null;
-    document.getElementById('videoForm').reset();
-}
-
-function closeModalOutside(e) {
-    if (e.target === document.getElementById('modalOverlay')) {
-        closeModal();
-    }
-}
-
-// ===== 保存视频 =====
-async function saveVideo(e) {
-    e.preventDefault();
-
-    const data = {
-        title: document.getElementById('title').value.trim(),
-        category: document.getElementById('category').value,
-        status: document.getElementById('status').value,
-        total_episodes: parseInt(document.getElementById('total_episodes').value) || null,
-        current_episode: parseInt(document.getElementById('current_episode').value) || null,
-        total_duration_min: parseInt(document.getElementById('total_duration_min').value) || null,
-        current_duration_min: parseInt(document.getElementById('current_duration_min').value) || null,
-        rating: parseInt(document.getElementById('rating').value) || null,
-        note: document.getElementById('note').value.trim()
-    };
-
-    try {
-        const url = editingId ? `/api/videos/${editingId}` : '/api/videos';
-        const method = editingId ? 'PUT' : 'POST';
-        const res = await fetch(url, {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+        const filters = reactive({
+            keyword: '',
+            category: '',
+            status: ''
         });
 
-        if (!res.ok) {
-            const err = await res.json();
-            showToast(err.error || '操作失败', 'error');
-            return;
-        }
+        const form = reactive({
+            title: '',
+            category: '电视剧',
+            status: '在看',
+            total_episodes: null,
+            current_episode: null,
+            total_duration_min: null,
+            current_duration_min: null,
+            rating: null,
+            note: ''
+        });
 
-        showToast(editingId ? '更新成功' : '添加成功');
-        closeModal();
-        loadVideos();
-    } catch (e) {
-        console.error('保存失败:', e);
-        showToast('保存失败，请重试', 'error');
-    }
-}
+        const rules = {
+            title: [
+                { required: true, message: '请输入标题', trigger: 'blur' }
+            ]
+        };
 
-// ===== 编辑视频 =====
-async function editVideo(id) {
-    try {
-        const res = await fetch(`/api/videos/${id}`);
-        const video = await res.json();
-        openModal(video);
-    } catch (e) {
-        showToast('加载失败', 'error');
-    }
-}
-
-// ===== 删除视频 =====
-function confirmDelete(id, name) {
-    deletingId = id;
-    document.getElementById('deleteVideoName').textContent = name;
-    document.getElementById('deleteOverlay').classList.add('active');
-    document.getElementById('confirmDeleteBtn').onclick = async () => {
-        try {
-            const res = await fetch(`/api/videos/${id}`, { method: 'DELETE' });
-            if (!res.ok) {
-                showToast('删除失败', 'error');
-                return;
+        const loadStats = async () => {
+            try {
+                const res = await fetch('/api/videos/stats');
+                stats.value = await res.json();
+            } catch (e) {
+                console.error('加载统计失败:', e);
             }
-            showToast('删除成功');
-            closeDeleteModal();
+        };
+
+        const loadVideos = async () => {
+            loading.value = true;
+            const params = new URLSearchParams();
+            if (filters.keyword) params.set('keyword', filters.keyword);
+            if (filters.category) params.set('category', filters.category);
+            if (filters.status) params.set('status', filters.status);
+
+            try {
+                const res = await fetch(`/api/videos?${params.toString()}`);
+                videos.value = await res.json();
+                loadStats();
+            } catch (e) {
+                console.error('加载失败:', e);
+                ElMessage.error('加载失败，请重试');
+            } finally {
+                loading.value = false;
+            }
+        };
+
+        const debounceLoadVideos = () => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(loadVideos, 300);
+        };
+
+        const openModal = (video = null) => {
+            editingVideo.value = video;
+            if (video) {
+                Object.assign(form, {
+                    title: video.title,
+                    category: video.category,
+                    status: video.status,
+                    total_episodes: video.total_episodes,
+                    current_episode: video.current_episode,
+                    total_duration_min: video.total_duration_min,
+                    current_duration_min: video.current_duration_min,
+                    rating: video.rating,
+                    note: video.note || ''
+                });
+            } else {
+                Object.assign(form, {
+                    title: '',
+                    category: '电视剧',
+                    status: '在看',
+                    total_episodes: null,
+                    current_episode: null,
+                    total_duration_min: null,
+                    current_duration_min: null,
+                    rating: null,
+                    note: ''
+                });
+            }
+            dialogVisible.value = true;
+        };
+
+        const saveVideo = async () => {
+            if (!formRef.value) return;
+            await formRef.value.validate(async (valid) => {
+                if (valid) {
+                    saving.value = true;
+                    try {
+                        const data = {
+                            title: form.title.trim(),
+                            category: form.category,
+                            status: form.status,
+                            total_episodes: form.total_episodes,
+                            current_episode: form.current_episode,
+                            total_duration_min: form.total_duration_min,
+                            current_duration_min: form.current_duration_min,
+                            rating: form.rating,
+                            note: form.note.trim()
+                        };
+
+                        const url = editingVideo.value ? `/api/videos/${editingVideo.value.id}` : '/api/videos';
+                        const method = editingVideo.value ? 'PUT' : 'POST';
+                        const res = await fetch(url, {
+                            method,
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+
+                        if (!res.ok) {
+                            const err = await res.json();
+                            ElMessage.error(err.error || '操作失败');
+                            return;
+                        }
+
+                        ElMessage.success(editingVideo.value ? '更新成功' : '添加成功');
+                        dialogVisible.value = false;
+                        loadVideos();
+                    } catch (e) {
+                        console.error('保存失败:', e);
+                        ElMessage.error('保存失败，请重试');
+                    } finally {
+                        saving.value = false;
+                    }
+                }
+            });
+        };
+
+        const editVideo = async (video) => {
+            openModal(video);
+        };
+
+        const confirmDelete = (video) => {
+            deletingVideo.value = video;
+            deleteDialogVisible.value = true;
+        };
+
+        const deleteVideo = async () => {
+            if (!deletingVideo.value) return;
+            deleting.value = true;
+            try {
+                const res = await fetch(`/api/videos/${deletingVideo.value.id}`, { method: 'DELETE' });
+                if (!res.ok) {
+                    ElMessage.error('删除失败');
+                    return;
+                }
+                ElMessage.success('删除成功');
+                deleteDialogVisible.value = false;
+                loadVideos();
+            } catch (e) {
+                ElMessage.error('删除失败');
+            } finally {
+                deleting.value = false;
+            }
+        };
+
+        onMounted(() => {
             loadVideos();
-        } catch (e) {
-            showToast('删除失败', 'error');
-        }
-    };
-}
+        });
 
-function closeDeleteModal() {
-    document.getElementById('deleteOverlay').classList.remove('active');
-    deletingId = null;
-}
-
-function closeDeleteOutside(e) {
-    if (e.target === document.getElementById('deleteOverlay')) {
-        closeDeleteModal();
-    }
-}
-
-// ===== 工具函数 =====
-function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-function truncate(str, len) {
-    if (!str) return '';
-    return str.length > len ? str.substring(0, len) + '...' : str;
-}
-
-// ===== 键盘快捷键 =====
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-        closeModal();
-        closeDeleteModal();
+        return {
+            videos,
+            stats,
+            loading,
+            saving,
+            deleting,
+            dialogVisible,
+            deleteDialogVisible,
+            editingVideo,
+            deletingVideo,
+            form,
+            formRef,
+            rules,
+            filters,
+            debounceLoadVideos,
+            loadVideos,
+            openModal,
+            saveVideo,
+            editVideo,
+            confirmDelete,
+            deleteVideo
+        };
     }
 });
+
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component);
+}
+
+app.use(ElementPlus);
+app.mount('#app');
