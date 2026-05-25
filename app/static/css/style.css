@@ -11,6 +11,8 @@ html, body {
     color: #333;
     line-height: 1.6;
     width: 100%;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
 }
 
 #app {
@@ -116,13 +118,6 @@ html, body {
     text-align: right;
 }
 
-@media (max-width: 768px) {
-    .add-btn-col {
-        text-align: left;
-        margin-top: 12px;
-    }
-}
-
 .video-list {
     min-height: 200px;
     width: 100%;
@@ -219,4 +214,227 @@ html, body {
 
 .el-card__body {
     padding: 20px !important;
+}
+
+/* ===================== 手机端适配 ===================== */
+@media (max-width: 768px) {
+    .app-header {
+        padding: 16px 12px;
+    }
+
+    .app-title {
+        font-size: 1.4rem;
+        margin-bottom: 12px;
+    }
+
+    .stats-bar {
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 10px 16px;
+        min-width: 80px;
+        flex: 1;
+        min-width: calc(50% - 5px);
+        max-width: calc(50% - 5px);
+    }
+
+    .stat-value {
+        font-size: 1.3rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+    }
+
+    .app-main {
+        padding: 16px 12px;
+    }
+
+    .toolbar-card .el-card__body {
+        padding: 16px !important;
+    }
+
+    .add-btn-col {
+        text-align: center;
+        margin-top: 12px;
+    }
+
+    .add-btn-col .el-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .el-col {
+        padding: 6px;
+    }
+
+    .video-card .el-card__body {
+        padding: 16px !important;
+    }
+
+    .title-text {
+        font-size: 1rem;
+    }
+
+    .card-actions {
+        flex-direction: row;
+        gap: 8px;
+    }
+
+    .card-actions .el-button {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+/* ===================== 超小屏手机适配 ===================== */
+@media (max-width: 480px) {
+    .stat-card {
+        min-width: 100%;
+        max-width: 100%;
+        padding: 12px;
+    }
+
+    .stats-bar {
+        gap: 8px;
+    }
+
+    .el-dialog {
+        width: 95% !important;
+        margin: 0 2.5%;
+    }
+
+    .el-dialog__body {
+        padding: 16px !important;
+    }
+
+    .el-form-item__label {
+        font-size: 0.9rem;
+    }
+
+    .el-button {
+        padding: 10px 16px;
+        height: auto;
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .card-header .el-tag {
+        align-self: flex-start;
+    }
+}
+
+/* ===================== 对话框移动端优化 ===================== */
+@media (max-width: 768px) {
+    .el-dialog {
+        width: 92% !important;
+        max-width: none !important;
+        margin: 5vh auto !important;
+        border-radius: 16px !important;
+    }
+
+    .el-dialog__header {
+        padding: 16px !important;
+    }
+
+    .el-dialog__title {
+        font-size: 1.1rem !important;
+    }
+
+    .el-dialog__body {
+        padding: 0 16px 16px !important;
+    }
+
+    .el-dialog__footer {
+        padding: 12px 16px 16px !important;
+        display: flex;
+        gap: 12px;
+    }
+
+    .el-dialog__footer .el-button {
+        flex: 1;
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+
+    .el-form-item {
+        margin-bottom: 16px !important;
+    }
+
+    .el-form-item__label {
+        font-size: 0.9rem;
+        padding-right: 0 !important;
+        width: 100% !important;
+        text-align: left !important;
+        padding-bottom: 6px !important;
+    }
+    
+    .el-form-item__content {
+        margin-left: 0 !important;
+    }
+
+    .el-form-item.is-required:not(.is-no-asterisk) .el-form-item__label-wrap > .el-form-item__label:before {
+        margin-right: 2px;
+    }
+
+    .el-input-number {
+        width: 100% !important;
+    }
+
+    .el-rate {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .el-divider__text {
+        font-size: 0.85rem;
+    }
+
+    /* 删除确认对话框优化 */
+    .delete-confirm-dialog .el-dialog__body {
+        padding: 20px 16px !important;
+    }
+}
+
+/* ===================== 按钮点击效果优化 ===================== */
+.el-button {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.el-button:active {
+    transform: scale(0.98);
+}
+
+/* ===================== 输入框触摸优化 ===================== */
+.el-input__wrapper,
+.el-select__wrapper {
+    min-height: 44px;
+}
+
+.el-select .el-input__wrapper {
+    padding-right: 30px;
+}
+
+/* ===================== 触摸滚动优化 ===================== */
+.video-list {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+}
+
+/* ===================== 防止文本选择 ===================== */
+.stat-card,
+.video-card {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }

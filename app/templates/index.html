@@ -29,7 +29,7 @@
             
             <el-main class="app-main">
                 <el-card class="toolbar-card" shadow="hover">
-                    <el-row :gutter="20" class="toolbar">
+                    <el-row :gutter="12" class="toolbar">
                         <el-col :xs="24" :sm="12" :md="8">
                             <el-input
                                 v-model="filters.keyword"
@@ -65,8 +65,8 @@
                 
                 <div class="video-list" v-loading="loading">
                     <el-empty v-if="!loading && videos.length === 0" description="还没有记录，点击\"添加记录\"开始吧！"></el-empty>
-                    <el-row :gutter="20">
-                        <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="video in videos" :key="video.id" style="margin-bottom: 20px">
+                    <el-row :gutter="12">
+                        <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="video in videos" :key="video.id" style="margin-bottom: 12px">
                             <video-card
                                 :video="video"
                                 @edit="editVideo"
@@ -83,8 +83,10 @@
             :title="editingVideo ? '编辑视频记录' : '添加视频记录'"
             width="600px"
             :close-on-click-modal="false"
+            class="video-form-dialog"
+            :close-on-press-escape="true"
         >
-            <el-form :model="form" ref="formRef" :rules="rules" label-width="100px">
+            <el-form :model="form" ref="formRef" :rules="rules" label-position="right" label-width="100px">
                 <el-form-item label="标题" prop="title">
                     <el-input v-model="form.title" placeholder="视频名称"></el-input>
                 </el-form-item>
@@ -162,8 +164,14 @@
             v-model="deleteDialogVisible"
             title="确认删除"
             width="450px"
+            :close-on-press-escape="true"
+            class="delete-confirm-dialog"
         >
-            <p>确定要删除「<strong v-text="deletingVideo ? deletingVideo.title : ''"></strong>」吗？此操作不可撤销。</p>
+            <div style="text-align: center; padding: 10px 0;">
+                <p style="margin-bottom: 8px; font-size: 1rem;">确定要删除以下视频记录吗？</p>
+                <p style="font-weight: 600; color: #409EFF; font-size: 1.1rem; word-break: break-all;" v-text="deletingVideo ? deletingVideo.title : ''"></p>
+                <p style="margin-top: 8px; font-size: 0.85rem; color: #999;">此操作不可撤销</p>
+            </div>
             <template #footer>
                 <el-button @click="deleteDialogVisible = false">取消</el-button>
                 <el-button type="danger" @click="deleteVideo" :loading="deleting">删除</el-button>
