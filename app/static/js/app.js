@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof Vue === 'undefined' || typeof ElementPlus === 'undefined') {
         console.error('Vue or ElementPlus not loaded');
@@ -14,11 +15,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var StatCard = {
         props: ['label', 'value', 'color'],
-        template: '\n        <div class="stat-card" :style="{ borderColor: color }">\n            <div class="stat-value" :style="{ color: color }">{{ value }}</div>\n            <div class="stat-label">{{ label }}</div>\n        </div>\n    '
+        template: '\n        <div class="stat-card" :style="{ \'--stat-color\': color }">\n            <div class="stat-value" :style="{ color: color }">{{ value }}</div>\n            <div class="stat-label">{{ label }}</div>\n        </div>\n    '
     };
 
     var VideoCard = {
-        props: ['video'],
+        props: ['video', 'index'],
         emits: ['edit', 'delete'],
         setup: function(props, context) {
             var emit = context.emit;
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 getStatusType: getStatusType
             };
         },
-        template: '\n        <el-card shadow="hover" class="video-card" :body-style="{ padding: \'20px\' }">\n            <div class="card-header">\n                <div class="card-title">\n                    <span class="category-icon" style="color: #409EFF; margin-right: 8px; font-size: 1.2rem;">\n                        {{ video.category === \'电视剧\' ? \'📺\' : video.category === \'电影\' ? \'🎬\' : video.category === \'动漫\' ? \'🎮\' : video.category === \'综艺\' ? \'🎤\' : video.category === \'纪录片\' ? \'📄\' : \'📹\' }}\n                    </span>\n                    <span class="title-text" :title="video.title">{{ video.title }}</span>\n                </div>\n                <el-tag :type="getStatusType(video.status)" effect="dark" size="small">\n                    {{ video.status }}\n                </el-tag>\n            </div>\n            <div class="card-content">\n                <div class="meta-line">\n                    <el-tag size="small" type="info">{{ video.category }}</el-tag>\n                    <span v-if="video.note" class="note-text" :title="video.note">\n                        📝 {{ video.note.length > 15 ? video.note.slice(0, 15) + \'...\' : video.note }}\n                    </span>\n                </div>\n                <div class="progress-line">\n                    <span class="progress-value">{{ progress.value }}</span>\n                    <span class="progress-label">{{ progress.label }}</span>\n                </div>\n                <div v-if="video.rating" class="rating-line">\n                    <el-rate\n                        v-model="video.rating"\n                        disabled\n                        :max="10"\n                        show-score\n                        text-color="#ff9900"\n                        score-template="{value}"\n                    ></el-rate>\n                </div>\n            </div>\n            <div class="card-actions">\n                <el-button type="primary" size="small" @click="$emit(\'edit\', video)" plain>\n                    ✏️ 编辑\n                </el-button>\n                <el-button type="danger" size="small" @click="$emit(\'delete\', video)" plain>\n                    🗑️ 删除\n                </el-button>\n            </div>\n        </el-card>\n    '
+        template: '\n        <el-card shadow="hover" class="video-card fade-in" :style="{ animationDelay: (index * 0.1) + \'s\' }">\n            <div class="card-header">\n                <div class="card-title">\n                    <span class="category-icon" style="color: #409EFF; margin-right: 8px; font-size: 1.2rem;">\n                        {{ video.category === \'电视剧\' ? \'📺\' : video.category === \'电影\' ? \'🎬\' : video.category === \'动漫\' ? \'🎮\' : video.category === \'综艺\' ? \'🎤\' : video.category === \'纪录片\' ? \'📄\' : \'📹\' }}\n                    </span>\n                    <span class="title-text" :title="video.title">{{ video.title }}</span>\n                </div>\n                <el-tag :type="getStatusType(video.status)" effect="dark" size="small">\n                    {{ video.status }}\n                </el-tag>\n            </div>\n            <div class="card-content">\n                <div class="meta-line">\n                    <el-tag size="small" type="info">{{ video.category }}</el-tag>\n                    <span v-if="video.note" class="note-text" :title="video.note">\n                        📝 {{ video.note.length > 15 ? video.note.slice(0, 15) + \'...\' : video.note }}\n                    </span>\n                </div>\n                <div class="progress-line">\n                    <span class="progress-value">{{ progress.value }}</span>\n                    <span class="progress-label">{{ progress.label }}</span>\n                </div>\n            </div>\n            <div class="card-actions">\n                <el-button type="primary" size="small" @click="$emit(\'edit\', video)" plain>\n                    ✏️ 编辑\n                </el-button>\n                <el-button type="danger" size="small" @click="$emit(\'delete\', video)" plain>\n                    🗑️ 删除\n                </el-button>\n            </div>\n        </el-card>\n    '
     };
 
     var app = VueCreateApp({

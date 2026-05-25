@@ -66,9 +66,10 @@
                 <div class="video-list" v-loading="loading">
                     <el-empty v-if="!loading && videos.length === 0" description="还没有记录，点击\"添加记录\"开始吧！"></el-empty>
                     <el-row :gutter="12">
-                        <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="video in videos" :key="video.id" style="margin-bottom: 12px">
+                        <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="(video, index) in videos" :key="video.id" style="margin-bottom: 12px">
                             <video-card
                                 :video="video"
+                                :index="index"
                                 @edit="editVideo"
                                 @delete="confirmDelete"
                             ></video-card>
