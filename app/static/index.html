@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>视频追剧记录</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
 </head>
 <body>
     <div id="app">
@@ -141,8 +140,9 @@
                         </div>
                     </div>
                     
-                    <div class="form-section">
-                        <div class="section-title">剧集进度</div>
+                    <!-- 剧集进度 - 非电影显示 -->
+                    <div class="form-section" v-if="form.category !== '电影'">
+                        <div class="section-title">📺 剧集进度</div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">总集数（可选，不填表示连载中）</label>
@@ -152,25 +152,17 @@
                                 <label class="form-label">当前看到</label>
                                 <input type="number" v-model="form.current_episode" min="0" placeholder="如: 12" class="form-input">
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">本集已看(分钟)</label>
-                                <input type="number" v-model="form.current_episode_minutes" min="0" placeholder="如: 15" class="form-input">
-                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">本集已看(分钟)（不填默认本集看完）</label>
+                            <input type="number" v-model="form.current_episode_minutes" min="0" placeholder="如: 15" class="form-input">
                         </div>
                     </div>
                     
-                    <div class="form-section">
-                        <div class="section-title">时长进度（电影用）</div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">总时长(分钟)</label>
-                                <input type="number" v-model="form.total_duration_min" min="0" placeholder="如: 120" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">已看时长(分钟)</label>
-                                <input type="number" v-model="form.current_duration_min" min="0" placeholder="如: 60" class="form-input">
-                            </div>
-                        </div>
+                    <!-- 电影进度 - 仅电影显示 -->
+                    <div class="form-section" v-if="form.category === '电影'">
+                        <div class="section-title">🎬 电影进度</div>
+                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 12px;">电影通过"状态"标记是否看完</p>
                     </div>
                     
                     <div class="form-group">
@@ -209,7 +201,7 @@
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script>
-        const { createApp, ref, reactive, onMounted } = Vue;
+        const { createApp, ref, reactive, onMounted, watch } = Vue;
         
         const app = createApp({
             setup() {
@@ -242,6 +234,18 @@
                     note: ''
                 });
                 
+                // 监听分类变化，清空对应的字段
+                watch(() => form.category, (newCat) => {
+                    if (newCat === '电影') {
+                        form.total_episodes = '';
+                        form.current_episode = '';
+                        form.current_episode_minutes = '';
+                    } else {
+                        form.total_duration_min = '';
+                        form.current_duration_min = '';
+                    }
+                });
+                
                 const getCategoryIcon = (category) => {
                     const icons = { '电视剧': '📺', '电影': '🎬', '动漫': '🎮', '综艺': '🎤', '纪录片': '📄' };
                     return icons[category] || '📹';
@@ -253,42 +257,49 @@
                 };
                 
                 const getProgressText = (video) => {
+                    // 电影只有状态，不用显示进度
+                    if (video.category === '电影') {
+                        return '';
+                    }
+                    
                     const totalEpisodes = parseInt(video.total_episodes);
                     const currentEpisode = parseInt(video.current_episode);
                     const currentMinutes = parseInt(video.current_episode_minutes);
-                    const totalDuration = parseInt(video.total_duration_min);
-                    const currentDuration = parseInt(video.current_duration_min);
                     
                     if (!isNaN(totalEpisodes)) {
                         let text = (isNaN(currentEpisode) ? 0 : currentEpisode) + '/' + totalEpisodes;
-                        if (!isNaN(currentMinutes)) text += ' (' + currentMinutes + '分钟)';
+                        if (!isNaN(currentMinutes)) {
+                            text += ' (' + currentMinutes + '分钟)';
+                        } else if (!isNaN(currentEpisode) && currentEpisode > 0) {
+                            // 没有分钟数，默认本集看完
+                            text += ' (本集已看完)';
+                        }
                         return text;
                     }
+                    
                     if (!isNaN(currentEpisode) && currentEpisode > 0) {
                         let text = '已看 ' + currentEpisode + ' 集';
-                        if (!isNaN(currentMinutes)) text += ' (' + currentMinutes + '分钟)';
+                        if (!isNaN(currentMinutes)) {
+                            text += ' (' + currentMinutes + '分钟)';
+                        } else {
+                            text += ' (连载中)';
+                        }
                         return text;
                     }
-                    if (!isNaN(totalDuration)) {
-                        return (isNaN(currentDuration) ? 0 : currentDuration) + '/' + totalDuration;
-                    }
-                    if (!isNaN(currentDuration) && currentDuration > 0) {
-                        return '已看 ' + currentDuration + ' 分钟';
-                    }
-                    return '-';
+                    
+                    return '未开始';
                 };
                 
                 const getProgressLabel = (video) => {
-                    const totalEpisodes = parseInt(video.total_episodes);
-                    const currentEpisode = parseInt(video.current_episode);
-                    const totalDuration = parseInt(video.total_duration_min);
-                    const currentDuration = parseInt(video.current_duration_min);
+                    if (video.category === '电影') {
+                        return '';
+                    }
                     
-                    if (!isNaN(totalEpisodes)) return '集数';
-                    if (!isNaN(currentEpisode)) return '连载中';
-                    if (!isNaN(totalDuration)) return '分钟';
-                    if (!isNaN(currentDuration)) return '电影';
-                    return '无进度';
+                    const totalEpisodes = parseInt(video.total_episodes);
+                    if (!isNaN(totalEpisodes)) {
+                        return '集数';
+                    }
+                    return '进度';
                 };
                 
                 const loadStats = async () => {
