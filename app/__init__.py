@@ -14,6 +14,14 @@ def create_app():
     app = Flask(__name__,
                 template_folder=template_dir,
                 static_folder=static_dir)
+    
+    # 修改 Jinja2 分隔符，避免与 Vue 冲突
+    app.jinja_env.variable_start_string = '{@'
+    app.jinja_env.variable_end_string = '@}'
+    app.jinja_env.block_start_string = '{%%'
+    app.jinja_env.block_end_string = '%%}'
+    app.jinja_env.comment_start_string = '{#'
+    app.jinja_env.comment_end_string = '#}'
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
     app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'
 
@@ -34,10 +42,7 @@ def create_app():
 
     @app.route('/')
     def index():
-        import os
-        from flask import send_from_directory
-        static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
-        return send_from_directory(static_dir, 'index.html')
+        return render_template('index.html')
 
     @app.route('/health')
     def health():
