@@ -17,24 +17,24 @@
                 <div class="header-content">
                     <h1 class="app-title">🎬 视频追剧记录</h1>
                     <div class="stats-bar">
-                        <div class="stat-card" style="--stat-color: #409EFF">
-                            <div class="stat-value" style="color: #409EFF">{{ stats.total }}</div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ stats.total }}</div>
                             <div class="stat-label">总计</div>
                         </div>
-                        <div class="stat-card" style="--stat-color: #409EFF">
-                            <div class="stat-value" style="color: #409EFF">{{ stats.watching }}</div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ stats.watching }}</div>
                             <div class="stat-label">在看</div>
                         </div>
-                        <div class="stat-card" style="--stat-color: #67C23A">
-                            <div class="stat-value" style="color: #67C23A">{{ stats.completed }}</div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ stats.completed }}</div>
                             <div class="stat-label">已看完</div>
                         </div>
-                        <div class="stat-card" style="--stat-color: #E6A23C">
-                            <div class="stat-value" style="color: #E6A23C">{{ stats.plan }}</div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ stats.plan }}</div>
                             <div class="stat-label">想看</div>
                         </div>
-                        <div class="stat-card" style="--stat-color: #F56C6C">
-                            <div class="stat-value" style="color: #F56C6C">{{ stats.dropped }}</div>
+                        <div class="stat-card">
+                            <div class="stat-value">{{ stats.dropped }}</div>
                             <div class="stat-label">弃剧</div>
                         </div>
                     </div>
@@ -78,7 +78,7 @@
                             <el-card shadow="hover" class="video-card fade-in">
                                 <div class="card-header">
                                     <div class="card-title">
-                                        <span class="category-icon" style="color: #409EFF; margin-right: 8px; font-size: 1.2rem;">{{ getCategoryIcon(video.category) }}</span>
+                                        <span class="category-icon" style="margin-right: 8px; font-size: 1.2rem;">{{ getCategoryIcon(video.category) }}</span>
                                         <span class="title-text">{{ video.title }}</span>
                                     </div>
                                     <el-tag :type="getStatusType(video.status)" effect="dark" size="small">{{ video.status }}</el-tag>
@@ -104,7 +104,15 @@
             </el-main>
         </el-container>
         
-        <el-dialog v-model="dialogVisible" :title="editingVideo ? '编辑视频记录' : '添加视频记录'" width="600px" :close-on-click-modal="false" class="video-form-dialog" :close-on-press-escape="true">
+        <el-dialog 
+            v-model="dialogVisible" 
+            :title="editingVideo ? '编辑视频记录' : '添加视频记录'" 
+            width="600px" 
+            :close-on-click-modal="false" 
+            class="video-form-dialog"
+            :close-on-press-escape="true"
+            :append-to-body="true"
+            :modal-append-to-body="true">
             <div class="form-container">
                 <div class="form-group">
                     <label class="form-label required">标题</label>
@@ -138,7 +146,7 @@
                     <div class="section-title">📺 剧集进度</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">总集数</label>
+                            <label class="form-label">总集数（可选，不填表示连载中）</label>
                             <el-input-number v-model="form.total_episodes" :min="0" class="form-input-number" placeholder="如: 24"></el-input-number>
                         </div>
                         <div class="form-group">
@@ -177,11 +185,18 @@
             </template>
         </el-dialog>
         
-        <el-dialog v-model="deleteDialogVisible" title="确认删除" width="450px" :close-on-press-escape="true" class="delete-confirm-dialog">
+        <el-dialog 
+            v-model="deleteDialogVisible" 
+            title="确认删除" 
+            width="450px" 
+            :close-on-press-escape="true" 
+            class="delete-confirm-dialog"
+            :append-to-body="true"
+            :modal-append-to-body="true">
             <div style="text-align: center; padding: 10px 0;">
                 <p style="margin-bottom: 8px; font-size: 1rem;">确定要删除以下视频记录吗？</p>
-                <p style="font-weight: 600; color: #409EFF; font-size: 1.1rem; word-break: break-all;">{{ deletingVideo ? deletingVideo.title : '' }}</p>
-                <p style="margin-top: 8px; font-size: 0.85rem; color: #999;">此操作不可撤销</p>
+                <p style="font-weight: 600; color: #4a90d9; font-size: 1.1rem; word-break: break-all;">{{ deletingVideo ? deletingVideo.title : '' }}</p>
+                <p style="margin-top: 8px; font-size: 0.85rem; color: #6b7280;">此操作不可撤销</p>
             </div>
             <template #footer>
                 <el-button @click="deleteDialogVisible = false">取消</el-button>
@@ -245,15 +260,25 @@
                             if (video.current_episode_minutes) text += ' (' + video.current_episode_minutes + '分钟)';
                             return text;
                         }
+                        if (video.current_episode !== null && video.current_episode !== undefined && video.current_episode > 0) {
+                            let text = '已看 ' + video.current_episode + ' 集';
+                            if (video.current_episode_minutes) text += ' (' + video.current_episode_minutes + '分钟)';
+                            return text;
+                        }
                         if (video.total_duration_min) {
                             return (video.current_duration_min || 0) + '/' + video.total_duration_min;
+                        }
+                        if (video.current_duration_min !== null && video.current_duration_min !== undefined && video.current_duration_min > 0) {
+                            return '已看 ' + video.current_duration_min + ' 分钟';
                         }
                         return '-';
                     };
                     
                     const getProgressLabel = (video) => {
                         if (video.total_episodes) return '集数';
+                        if (video.current_episode) return '（连载中）';
                         if (video.total_duration_min) return '分钟';
+                        if (video.current_duration_min) return '（电影）';
                         return '无进度';
                     };
                     
