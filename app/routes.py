@@ -1,3 +1,4 @@
+
 from flask import Blueprint, request, jsonify
 from .database import get_db
 
@@ -32,8 +33,8 @@ def list_videos():
         videos = []
         for row in rows:
             video_dict = dict(row)
-            for key in ['total_episodes', 'current_episode', 'total_duration_min', 'current_duration_min', 'rating']:
-                if video_dict[key] is None:
+            for key in ['total_episodes', 'current_episode', 'total_duration_min', 'current_duration_min', 'current_episode_minutes']:
+                if key in video_dict and video_dict[key] is None:
                     video_dict[key] = None
             videos.append(video_dict)
         return jsonify(videos)
@@ -51,8 +52,8 @@ def get_video(video_id):
         if row is None:
             return jsonify({'error': '视频记录不存在'}), 404
         video_dict = dict(row)
-        for key in ['total_episodes', 'current_episode', 'total_duration_min', 'current_duration_min', 'rating']:
-            if video_dict[key] is None:
+        for key in ['total_episodes', 'current_episode', 'total_duration_min', 'current_duration_min', 'current_episode_minutes']:
+            if key in video_dict and video_dict[key] is None:
                 video_dict[key] = None
         return jsonify(video_dict)
     except Exception as e:
@@ -76,7 +77,7 @@ def create_video():
 
         db.execute('''
             INSERT INTO videos (title, category, total_episodes, total_duration_min,
-                               current_episode, current_duration_min, status, rating, note)
+                               current_episode, current_duration_min, current_episode_minutes, status, note)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             title,
@@ -85,8 +86,8 @@ def create_video():
             data.get('total_duration_min'),
             data.get('current_episode'),
             data.get('current_duration_min'),
+            data.get('current_episode_minutes'),
             data.get('status', '在看'),
-            data.get('rating'),
             data.get('note', '')
         ))
         db.commit()
@@ -94,8 +95,8 @@ def create_video():
         video_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
         row = db.execute('SELECT * FROM videos WHERE id = ?', (video_id,)).fetchone()
         video_dict = dict(row)
-        for key in ['total_episodes', 'current_episode', 'total_duration_min', 'current_duration_min', 'rating']:
-            if video_dict[key] is None:
+        for key in ['total_episodes', 'current_episode', 'total_duration_min', 'current_duration_min', 'current_episode_minutes']:
+            if key in video_dict and video_dict[key] is None:
                 video_dict[key] = None
         return jsonify(video_dict), 201
     except Exception as e:
@@ -124,8 +125,8 @@ def update_video(video_id):
         db.execute('''
             UPDATE videos SET
                 title = ?, category = ?, total_episodes = ?, total_duration_min = ?,
-                current_episode = ?, current_duration_min = ?, status = ?, rating = ?,
-                note = ?, updated_at = CURRENT_TIMESTAMP
+                current_episode = ?, current_duration_min = ?, current_episode_minutes = ?,
+                status = ?, note = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (
             title,
@@ -134,8 +135,8 @@ def update_video(video_id):
             data.get('total_duration_min'),
             data.get('current_episode'),
             data.get('current_duration_min'),
+            data.get('current_episode_minutes'),
             data.get('status', row['status']),
-            data.get('rating'),
             data.get('note', ''),
             video_id
         ))
@@ -143,8 +144,8 @@ def update_video(video_id):
 
         row = db.execute('SELECT * FROM videos WHERE id = ?', (video_id,)).fetchone()
         video_dict = dict(row)
-        for key in ['total_episodes', 'current_episode', 'total_duration_min', 'current_duration_min', 'rating']:
-            if video_dict[key] is None:
+        for key in ['total_episodes', 'current_episode', 'total_duration_min', 'current_duration_min', 'current_episode_minutes']:
+            if key in video_dict and video_dict[key] is None:
                 video_dict[key] = None
         return jsonify(video_dict)
     except Exception as e:

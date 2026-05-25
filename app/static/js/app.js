@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var StatCard = {
         props: ['label', 'value', 'color'],
-        template: '\n        <div class="stat-card" :style="{ \'--stat-color\': color }">\n            <div class="stat-value" :style="{ color: color }">{{ value }}</div>\n            <div class="stat-label">{{ label }}</div>\n        </div>\n    '
+        template: '\n        &lt;div class="stat-card" :style="{ \'--stat-color\': color }"&gt;\n            &lt;div class="stat-value" :style="{ color: color }"&gt;{{ value }}&lt;/div&gt;\n            &lt;div class="stat-label"&gt;{{ label }}&lt;/div&gt;\n        &lt;/div&gt;\n    '
     };
 
     var VideoCard = {
@@ -27,7 +27,11 @@ document.addEventListener('DOMContentLoaded', function() {
             var getProgress = function(v) {
                 if (v.total_episodes) {
                     var current = v.current_episode || 0;
-                    return { value: current + '/' + v.total_episodes, label: '集数' };
+                    var result = { value: current + '/' + v.total_episodes, label: '集数' };
+                    if (v.current_episode_minutes !== null && v.current_episode_minutes !== undefined) {
+                        result.value += ' (' + v.current_episode_minutes + '分钟)';
+                    }
+                    return result;
                 }
                 if (v.total_duration_min) {
                     var current = v.current_duration_min || 0;
@@ -55,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 getStatusType: getStatusType
             };
         },
-        template: '\n        <el-card shadow="hover" class="video-card fade-in" :style="{ animationDelay: (index * 0.1) + \'s\' }">\n            <div class="card-header">\n                <div class="card-title">\n                    <span class="category-icon" style="color: #409EFF; margin-right: 8px; font-size: 1.2rem;">\n                        {{ video.category === \'电视剧\' ? \'📺\' : video.category === \'电影\' ? \'🎬\' : video.category === \'动漫\' ? \'🎮\' : video.category === \'综艺\' ? \'🎤\' : video.category === \'纪录片\' ? \'📄\' : \'📹\' }}\n                    </span>\n                    <span class="title-text" :title="video.title">{{ video.title }}</span>\n                </div>\n                <el-tag :type="getStatusType(video.status)" effect="dark" size="small">\n                    {{ video.status }}\n                </el-tag>\n            </div>\n            <div class="card-content">\n                <div class="meta-line">\n                    <el-tag size="small" type="info">{{ video.category }}</el-tag>\n                    <span v-if="video.note" class="note-text" :title="video.note">\n                        📝 {{ video.note.length > 15 ? video.note.slice(0, 15) + \'...\' : video.note }}\n                    </span>\n                </div>\n                <div class="progress-line">\n                    <span class="progress-value">{{ progress.value }}</span>\n                    <span class="progress-label">{{ progress.label }}</span>\n                </div>\n            </div>\n            <div class="card-actions">\n                <el-button type="primary" size="small" @click="$emit(\'edit\', video)" plain>\n                    ✏️ 编辑\n                </el-button>\n                <el-button type="danger" size="small" @click="$emit(\'delete\', video)" plain>\n                    🗑️ 删除\n                </el-button>\n            </div>\n        </el-card>\n    '
+        template: '\n        &lt;el-card shadow="hover" class="video-card fade-in" :style="{ animationDelay: (index * 0.1) + \'s\' }"&gt;\n            &lt;div class="card-header"&gt;\n                &lt;div class="card-title"&gt;\n                    &lt;span class="category-icon" style="color: #409EFF; margin-right: 8px; font-size: 1.2rem;"&gt;\n                        {{ video.category === \'电视剧\' ? \'📺\' : video.category === \'电影\' ? \'🎬\' : video.category === \'动漫\' ? \'🎮\' : video.category === \'综艺\' ? \'🎤\' : video.category === \'纪录片\' ? \'📄\' : \'📹\' }}\n                    &lt;/span&gt;\n                    &lt;span class="title-text" :title="video.title"&gt;{{ video.title }}&lt;/span&gt;\n                &lt;/div&gt;\n                &lt;el-tag :type="getStatusType(video.status)" effect="dark" size="small"&gt;\n                    {{ video.status }}\n                &lt;/el-tag&gt;\n            &lt;/div&gt;\n            &lt;div class="card-content"&gt;\n                &lt;div class="meta-line"&gt;\n                    &lt;el-tag size="small" type="info"&gt;{{ video.category }}&lt;/el-tag&gt;\n                    &lt;span v-if="video.note" class="note-text" :title="video.note"&gt;\n                        📝 {{ video.note.length &gt; 15 ? video.note.slice(0, 15) + \'...\' : video.note }}\n                    &lt;/span&gt;\n                &lt;/div&gt;\n                &lt;div class="progress-line"&gt;\n                    &lt;span class="progress-value"&gt;{{ progress.value }}&lt;/span&gt;\n                    &lt;span class="progress-label"&gt;{{ progress.label }}&lt;/span&gt;\n                &lt;/div&gt;\n            &lt;/div&gt;\n            &lt;div class="card-actions"&gt;\n                &lt;el-button type="primary" size="small" @click="$emit(\'edit\', video)" plain&gt;\n                    ✏️ 编辑\n                &lt;/el-button&gt;\n                &lt;el-button type="danger" size="small" @click="$emit(\'delete\', video)" plain&gt;\n                    🗑️ 删除\n                &lt;/el-button&gt;\n            &lt;/div&gt;\n        &lt;/el-card&gt;\n    '
     };
 
     var app = VueCreateApp({
@@ -89,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 current_episode: null,
                 total_duration_min: null,
                 current_duration_min: null,
-                rating: null,
+                current_episode_minutes: null,
                 note: ''
             });
 
@@ -145,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     form.current_episode = video.current_episode;
                     form.total_duration_min = video.total_duration_min;
                     form.current_duration_min = video.current_duration_min;
-                    form.rating = video.rating;
+                    form.current_episode_minutes = video.current_episode_minutes;
                     form.note = video.note || '';
                 } else {
                     form.title = '';
@@ -155,7 +159,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     form.current_episode = null;
                     form.total_duration_min = null;
                     form.current_duration_min = null;
-                    form.rating = null;
+                    form.current_episode_minutes = null;
                     form.note = '';
                 }
                 dialogVisible.value = true;
@@ -181,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     current_episode: form.current_episode,
                     total_duration_min: form.total_duration_min,
                     current_duration_min: form.current_duration_min,
-                    rating: form.rating,
+                    current_episode_minutes: form.current_episode_minutes,
                     note: form.note.trim()
                 };
 
