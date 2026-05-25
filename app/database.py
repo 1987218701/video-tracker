@@ -2,7 +2,21 @@ import sqlite3
 import os
 from flask import g
 
-DATABASE = os.environ.get('DATABASE_PATH', '/data/videos.db')
+def get_database_path():
+    """获取数据库路径，确保目录存在"""
+    env_path = os.environ.get('DATABASE_PATH')
+    if env_path:
+        db_path = env_path
+    else:
+        db_path = os.path.join(os.path.dirname(__file__), '..', 'instance', 'videos.db')
+    
+    db_dir = os.path.dirname(db_path)
+    if db_dir and not os.path.exists(db_dir):
+        os.makedirs(db_dir, exist_ok=True)
+    
+    return db_path
+
+DATABASE = get_database_path()
 
 
 def get_db():

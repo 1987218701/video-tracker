@@ -60,9 +60,9 @@ const VideoCard = {
         <el-card shadow="hover" class="video-card" :body-style="{ padding: '20px' }">
             <div class="card-header">
                 <div class="card-title">
-                    <el-icon class="category-icon" style="color: #409EFF; margin-right: 8px;">
-                        <component :is="getCategoryIcon(video.category)"></component>
-                    </el-icon>
+                    <span class="category-icon" style="color: #409EFF; margin-right: 8px; font-size: 1.2rem;">
+                        {{ video.category === '电视剧' ? '📺' : video.category === '电影' ? '🎬' : video.category === '动漫' ? '🎮' : video.category === '综艺' ? '🎤' : video.category === '纪录片' ? '📄' : '📹' }}
+                    </span>
                     <span class="title-text" :title="video.title">{{ video.title }}</span>
                 </div>
                 <el-tag :type="getStatusType(video.status)" effect="dark" size="small">
@@ -93,10 +93,10 @@ const VideoCard = {
             </div>
             <div class="card-actions">
                 <el-button type="primary" size="small" @click="$emit('edit', video)" plain>
-                    <el-icon><Edit /></el-icon> 编辑
+                    ✏️ 编辑
                 </el-button>
                 <el-button type="danger" size="small" @click="$emit('delete', video)" plain>
-                    <el-icon><Delete /></el-icon> 删除
+                    🗑️ 删除
                 </el-button>
             </div>
         </el-card>
