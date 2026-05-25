@@ -179,14 +179,12 @@ def get_stats():
         watching = db.execute("SELECT COUNT(*) FROM videos WHERE status = '在看'").fetchone()[0]
         completed = db.execute("SELECT COUNT(*) FROM videos WHERE status = '已看完'").fetchone()[0]
         plan = db.execute("SELECT COUNT(*) FROM videos WHERE status = '想看'").fetchone()[0]
-        dropped = db.execute("SELECT COUNT(*) FROM videos WHERE status = '弃剧'").fetchone()[0]
 
         return jsonify({
             'total': total,
             'watching': watching,
             'completed': completed,
-            'plan': plan,
-            'dropped': dropped
+            'plan': plan
         })
     except Exception as e:
         print(f"Error in get_stats: {e}")

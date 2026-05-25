@@ -24,6 +24,7 @@ html, body {
 .app-container {
     min-height: 100vh;
     width: 100%;
+    position: relative;
 }
 
 /* ===================== 头部样式 ===================== */
@@ -52,14 +53,15 @@ html, body {
 .stats-bar {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
+    margin-bottom: 16px;
 }
 
 .stat-card {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 10px;
-    padding: 10px 14px;
+    padding: 10px 16px;
     min-width: 70px;
     text-align: center;
     transition: all 0.3s ease;
@@ -71,8 +73,17 @@ html, body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
+.stat-total {
+    opacity: 0.8;
+}
+
+.stat-plan {
+    cursor: pointer;
+    border-left: 4px solid #e6a23c;
+}
+
 .stat-value {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 700;
     margin-bottom: 2px;
     color: #1a1a2e;
@@ -86,9 +97,44 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-/* ===================== 主内容区域 ===================== */
+/* 导航Tab */
+.nav-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 4px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.nav-tab {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-tab:hover {
+    color: white;
+}
+
+.nav-tab.active {
+    background: rgba(255, 255, 255, 0.95);
+    color: #4a90d9;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ===================== 主要内容区域 ===================== */
 .app-main {
-    padding: 16px 12px;
+    padding: 20px 16px;
     max-width: 1400px;
     margin: 0 auto;
     width: 100%;
@@ -98,7 +144,7 @@ html, body {
     background: #ffffff;
     border-radius: 12px;
     padding: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
@@ -153,27 +199,17 @@ html, body {
     box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.1);
 }
 
-.add-btn {
-    min-width: 120px;
-    text-align: right;
+/* 想看页头部 */
+.plan-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
-.add-button {
-    padding: 10px 20px;
-    background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(74, 144, 217, 0.3);
-}
-
-.add-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(74, 144, 217, 0.4);
+.plan-header h2 {
+    font-size: 1.3rem;
+    color: #1a1a2e;
 }
 
 /* ===================== 视频列表 ===================== */
@@ -183,7 +219,7 @@ html, body {
 
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
+    padding: 60px 20px;
 }
 
 .empty-icon {
@@ -213,6 +249,10 @@ html, body {
 .video-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.plan-card {
+    border-left: 4px solid #e6a23c;
 }
 
 .card-header {
@@ -255,12 +295,7 @@ html, body {
 
 .status-plan {
     background: #fef3c7;
-    color: #d97706;
-}
-
-.status-dropped {
-    background: #fee2e2;
-    color: #dc2626;
+    color: #e6a23c;
 }
 
 .card-content {
@@ -316,12 +351,17 @@ html, body {
     flex: 1;
     padding: 8px 12px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .btn-primary {
@@ -351,9 +391,32 @@ html, body {
     background: #d1d5db;
 }
 
-.btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+/* ===================== 悬浮添加按钮 ===================== */
+.fab-add {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 16px rgba(74, 144, 217, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+.fab-add:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 20px rgba(74, 144, 217, 0.5);
+}
+
+.fab-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+    font-weight: 300;
 }
 
 /* ===================== 弹窗样式 ===================== */
@@ -455,7 +518,7 @@ html, body {
 
 .form-input, .form-select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px 14px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -471,7 +534,7 @@ html, body {
 
 .form-textarea {
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px 14px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -540,7 +603,7 @@ html, body {
     }
     
     .app-title {
-        font-size: 2rem;
+        font-size: 1.9rem;
         margin-bottom: 20px;
     }
     
@@ -549,17 +612,17 @@ html, body {
     }
     
     .stat-card {
-        padding: 14px 20px;
-        min-width: 100px;
+        padding: 12px 20px;
+        min-width: 90px;
         border-radius: 12px;
     }
     
     .stat-value {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
     
     .stat-label {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
     }
     
     .app-main {
@@ -568,7 +631,7 @@ html, body {
     
     .toolbar-card {
         padding: 20px;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
     }
     
     .video-grid {
@@ -593,6 +656,17 @@ html, body {
     
     .modal-content {
         max-width: 550px;
+    }
+    
+    .fab-add {
+        bottom: 40px;
+        right: 40px;
+        width: 64px;
+        height: 64px;
+    }
+    
+    .fab-icon {
+        font-size: 2.4rem;
     }
 }
 
