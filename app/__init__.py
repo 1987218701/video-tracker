@@ -36,8 +36,8 @@ def create_app():
     def index():
         import os
         from flask import send_from_directory
-        template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
-        return send_from_directory(template_dir, 'index.html')
+        static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+        return send_from_directory(static_dir, 'index.html')
 
     @app.route('/health')
     def health():
