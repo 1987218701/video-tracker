@@ -161,6 +161,25 @@ docker compose up -d --build
 （未设置时为空，等同使用默认值），只需在 `.env` 中填值即可。
 Docker 生产端口为容器内 5000，与宿主机上占用 5000 的程序互不影响（容器独立网络空间，可通过 `ports` 映射修改）。
 
+### 服务器一键部署（无域名 / 仅自己使用）
+
+已安装 Docker 的 Linux 服务器，把代码放到 `/opt/video-tracker` 后执行：
+
+```bash
+bash deploy.sh
+```
+
+脚本会生成含随机 `SECRET_KEY` 的 `.env`、把服务**只绑定到 `127.0.0.1`**、构建启动并等待 `/health` 就绪。
+应用本身没有登录鉴权，请勿把 5000 端口直接暴露公网。在自己电脑上建立 SSH 隧道后访问
+`http://127.0.0.1:5000`：
+
+```bash
+ssh -L 5000:127.0.0.1:5000 <用户名>@<服务器IP>
+```
+
+可用 `HOST_PORT=8080 bash deploy.sh` 改宿主机端口（隧道端口同步改为 8080）。
+脚本不会改动已有的 `.env` 和数据卷，可重复执行；数据不迁移时启动后即为全新空库。
+
 ### 配置 TMDB 元数据补全（可选）
 
 1. 在 `themoviedb.org` 登录 → Settings → API → Request an API Key → 以 **Developer** 身份申请。
