@@ -354,28 +354,25 @@
                 </div>
 
                 <p class="form-hint completed-tip" v-if="isCompleted">
-                    &#x2705; 已看完：进度自动记为 100%，无需填写「当前集 / 已看时长 / 当前页」
+                    &#x2705; 已看完：进度自动记为 100%，无需填写进度信息<span v-if="completedSummary">（{{ completedSummary }}）</span>
                 </p>
 
                 <!-- Video: TV mode -->
-                <div class="form-section" v-if="form.type === 'video' && videoMode === 'tv'">
-                    <div class="section-title">
-                        <span>&#x1F4FA; 剧集进度</span>
-                        <button class="mode-switch" @click="switchVideoMode('movie')">切换为电影模式</button>
-                    </div>
+                <div class="form-section" v-if="form.type === 'video' && videoMode === 'tv' && !isCompleted">
+                    <div class="section-title">&#x1F4FA; 剧集进度</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">总集数</label>
                             <input type="number" v-model="form.total_count" class="form-input"
                                 placeholder="如 30" min="0">
                         </div>
-                        <div class="form-group" v-if="!isCompleted">
+                        <div class="form-group">
                             <label class="form-label">当前看到</label>
                             <input type="number" v-model="form.current_position" class="form-input"
                                 placeholder="如 8" min="0">
                         </div>
                     </div>
-                    <div class="form-group" v-if="!isCompleted">
+                    <div class="form-group">
                         <label class="form-label">本集已看（分钟）</label>
                         <input type="number" v-model="form.current_minutes" class="form-input"
                             placeholder="可选" min="0">
@@ -383,18 +380,15 @@
                 </div>
 
                 <!-- Video: Movie mode -->
-                <div class="form-section" v-if="form.type === 'video' && videoMode === 'movie'">
-                    <div class="section-title">
-                        <span>&#x1F3AC; 电影进度</span>
-                        <button class="mode-switch" @click="switchVideoMode('tv')">切换为剧集模式</button>
-                    </div>
+                <div class="form-section" v-if="form.type === 'video' && videoMode === 'movie' && !isCompleted">
+                    <div class="section-title">&#x1F3AC; 电影进度</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">总时长（分钟）</label>
                             <input type="number" v-model="form.total_duration_min" class="form-input"
                                 placeholder="如 120" min="0">
                         </div>
-                        <div class="form-group" v-if="!isCompleted">
+                        <div class="form-group">
                             <label class="form-label">已看时长（分钟）</label>
                             <input type="number" v-model="form.current_duration_min" class="form-input"
                                 placeholder="如 60" min="0">
@@ -403,7 +397,7 @@
                 </div>
 
                 <!-- Tutorial fields -->
-                <div class="form-section" v-if="form.type === 'tutorial'">
+                <div class="form-section" v-if="form.type === 'tutorial' && !isCompleted">
                     <div class="section-title">&#x1F4CB; 教程进度</div>
                     <div class="form-row">
                         <div class="form-group">
@@ -411,7 +405,7 @@
                             <input type="number" v-model="form.total_count" class="form-input"
                                 placeholder="如 20" min="0">
                         </div>
-                        <div class="form-group" v-if="!isCompleted">
+                        <div class="form-group">
                             <label class="form-label">当前节</label>
                             <input type="number" v-model="form.current_position" class="form-input"
                                 placeholder="如 5" min="0">
@@ -421,7 +415,7 @@
                 </div>
 
                 <!-- Book fields -->
-                <div class="form-section" v-if="form.type === 'book'">
+                <div class="form-section" v-if="form.type === 'book' && !isCompleted">
                     <div class="section-title">&#x1F4D6; 书籍进度</div>
                     <div class="form-row">
                         <div class="form-group">
@@ -429,7 +423,7 @@
                             <input type="number" v-model="form.total_pages" class="form-input"
                                 placeholder="如 320" min="0">
                         </div>
-                        <div class="form-group" v-if="!isCompleted">
+                        <div class="form-group">
                             <label class="form-label">当前页</label>
                             <input type="number" v-model="form.current_page" class="form-input"
                                 placeholder="如 120" min="0">

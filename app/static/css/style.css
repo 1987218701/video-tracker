@@ -696,20 +696,6 @@ html, body {
     flex-wrap: wrap;
 }
 
-.mode-switch {
-    font-size: 0.78rem;
-    font-weight: 400;
-    background: #eef6ff;
-    border: 1px solid #b5d4f4;
-    color: #185FA5;
-    border-radius: 6px;
-    cursor: pointer;
-    padding: 3px 9px;
-    white-space: nowrap;
-}
-
-.mode-switch:hover { background: #dbeafe; }
-
 .form-hint {
     font-size: 0.8rem;
     color: #9ca3af;

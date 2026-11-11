@@ -129,11 +129,18 @@ createApp({
         const categoryOptions = computed(() => (
             form.type === 'video' ? videoCategoryOptions.value : (categoryOptionsMap[form.type] || [])
         ));
-        const categoryText = computed(() => (
-            form.type === 'video' ? (form.categories.join('、') || '未选择') : form.category
-        ));
-        // 已看完时进度自动记为 100%，表单隐藏所有「当前/已看」输入
+        // 已看完时整块进度填写区隐藏，进度由后端补满为 100%
         const isCompleted = computed(() => form.status === '已看完');
+        // 仍给出已有总数的摘要，避免编辑旧记录时看不到集数 / 页数
+        const completedSummary = computed(() => {
+            if (form.type === 'video') {
+                if (videoMode.value === 'movie' && form.total_duration_min) return `共 ${form.total_duration_min} 分钟`;
+                if (form.total_count) return `共 ${form.total_count} 集`;
+            }
+            if (form.type === 'tutorial' && form.total_count) return `共 ${form.total_count} 节`;
+            if (form.type === 'book' && form.total_pages) return `共 ${form.total_pages} 页`;
+            return '';
+        });
 
         // ---- helpers ----
         const showToast = (message, type = 'success') => {
@@ -388,7 +395,7 @@ createApp({
                 form.total_duration_min = '';
                 form.current_duration_min = '';
             }
-            // 手动切换模式时同步形式标签，保留已选的类型标签
+            // 切换模式时同步形式标签，保留已选的类型标签
             if (form.type === 'video') {
                 const format = mode === 'movie' ? '电影' : '电视剧';
                 const genres = form.categories.filter(t => t !== '电影' && t !== '电视剧');
@@ -862,7 +869,7 @@ createApp({
             dialogVisible, detailVisible, deleteVisible,
             editingItem, detailItem, deletingItem,
             form, filters, stats, tabStats, toast,
-            typeOptions, statusOptions, categoryOptions, categoryText, isCompleted,
+            typeOptions, statusOptions, categoryOptions, isCompleted, completedSummary,
             videoCategoryOptions, isFormatTag,
             videoMode, searchVisible, searchInput, csvInput,
             currentTabLabel, currentTabIcon,
@@ -871,7 +878,7 @@ createApp({
             heatmapWeeks, statusBars, typeBars, ratingBarHeight, overviewCards,
             metadataEnabled, metadataLoading, metadataResults, metadataHint,
             switchTab, setStatus, debounceLoad, loadItems, changePage,
-            selectType, switchVideoMode, onCategoryChange, toggleCategory,
+            selectType, onCategoryChange, toggleCategory,
             toggleSearch, closeSearch, clearSearch,
             openAddDialog, openEditDialog, openDetail, saveItem,
             confirmDelete, deleteItem,
