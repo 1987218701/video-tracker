@@ -132,6 +132,8 @@ createApp({
         const categoryText = computed(() => (
             form.type === 'video' ? (form.categories.join('、') || '未选择') : form.category
         ));
+        // 已看完时进度自动记为 100%，表单隐藏所有「当前/已看」输入
+        const isCompleted = computed(() => form.status === '已看完');
 
         // ---- helpers ----
         const showToast = (message, type = 'success') => {
@@ -171,6 +173,16 @@ createApp({
         };
 
         const getProgressText = (item) => {
+            // 已看完按 100% 展示，兼容进度没存满的历史数据
+            if (item.status === '已看完') {
+                if (!item.total_count && !item.total_duration_min && !item.total_pages) return '';
+                item = {
+                    ...item,
+                    current_position: item.total_count ?? item.current_position,
+                    current_duration_min: item.total_duration_min ?? item.current_duration_min,
+                    current_page: item.total_pages ?? item.current_page,
+                };
+            }
             if (item.type === 'video') {
                 if (item.total_duration_min && !item.total_count) {
                     let t = '\u{1F3AC} ' + item.total_duration_min + ' 分钟';
@@ -203,6 +215,7 @@ createApp({
         };
 
         const getProgressPercent = (item) => {
+            if (item.status === '已看完') return 100;
             if (item.type === 'video') {
                 if (item.total_count) {
                     return Math.min(100, Math.round((item.current_position || 0) / item.total_count * 100));
@@ -849,7 +862,7 @@ createApp({
             dialogVisible, detailVisible, deleteVisible,
             editingItem, detailItem, deletingItem,
             form, filters, stats, tabStats, toast,
-            typeOptions, statusOptions, categoryOptions, categoryText,
+            typeOptions, statusOptions, categoryOptions, categoryText, isCompleted,
             videoCategoryOptions, isFormatTag,
             videoMode, searchVisible, searchInput, csvInput,
             currentTabLabel, currentTabIcon,

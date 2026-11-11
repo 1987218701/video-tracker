@@ -44,7 +44,7 @@ def _item_payload(data, base=None):
             return base[key]
         return default
 
-    return {
+    payload = {
         'type': pick('type', 'video'),
         'title': (pick('title') or '').strip(),
         'category': pick('category', '') or '',
@@ -62,6 +62,19 @@ def _item_payload(data, base=None):
         'cover_url': pick('cover_url', '') or '',
         'external_url': pick('external_url', '') or '',
     }
+
+    # 「已看完」进度视为 100%：前端不再要求手填当前集 / 已看时长 / 当前页，
+    # 后端统一补满，API 与 CSV 导入等入口也保持一致的语义
+    if payload['status'] == '已看完':
+        if payload['total_count'] is not None:
+            payload['current_position'] = payload['total_count']
+        payload['current_minutes'] = None
+        if payload['total_duration_min'] is not None:
+            payload['current_duration_min'] = payload['total_duration_min']
+        if payload['total_pages'] is not None:
+            payload['current_page'] = payload['total_pages']
+
+    return payload
 
 
 INSERT_SQL = '''
