@@ -152,8 +152,9 @@
 echo "SECRET_KEY=$(openssl rand -hex 32)" > .env
 # echo "TMDB_API_KEY=your_tmdb_api_key" >> .env
 
-# 2. 启动
-docker compose up -d --build
+# 2. 拉取预构建镜像并启动（推荐）
+docker compose pull && docker compose up -d
+# 若需要从源码本地构建，改用：docker compose up -d --build
 
 # 3. 访问
 # http://your-server-ip:5000
@@ -162,6 +163,44 @@ docker compose up -d --build
 `docker-compose.yml` 已预置 `TMDB_API_KEY` 及 `TMDB_API_BASE` / `TMDB_IMAGE_BASE` / `TMDB_TIMEOUT`
 （未设置时为空，等同使用默认值），只需在 `.env` 中填值即可。
 Docker 生产端口为容器内 5000，与宿主机上占用 5000 的程序互不影响（容器独立网络空间，可通过 `ports` 映射修改）。
+
+### 使用预构建镜像（服务器推荐）
+
+每次 push 到 `main`，`.github/workflows/docker-publish.yml` 会自动构建
+`linux/amd64` + `linux/arm64` 镜像并推送到 GHCR：`ghcr.io/1987218701/video-tracker:latest`
+（同时打 `sha-<短提交号>` 标签，便于固定版本或回滚）。
+
+首次使用需先让服务器有权拉取该镜像，二选一：
+
+- **设为公开**：GitHub 仓库 → 右侧 `Packages` → `video-tracker` → `Package settings` →
+  `Change visibility` → Public。
+- **保持私有**：在服务器登录（PAT 需 `read:packages` 权限）：
+  ```bash
+  echo '<PAT>' | docker login ghcr.io -u <GitHub用户名> --password-stdin
+  ```
+
+服务器上首次切换（需要 `git pull` 取得含 `image` 字段的新 compose）：
+
+```bash
+cd ~/video-tracker
+git pull
+docker compose pull
+docker compose up -d
+```
+
+之后的日常更新只需两条命令，服务器**不再需要本地编译、也不必 `git pull`**（代码已打包进镜像）：
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+- 想一条命令完成：`docker compose up -d --pull always`。
+- 固定版本或回滚：在 `.env` 写 `IMAGE_TAG=sha-xxxxxxx` 后再 pull。
+- 只有改了 `docker-compose.yml` / `Dockerfile` 等部署配置时才需要 `git pull`。
+- `docker compose up -d` 默认不主动检查远端新镜像，所以 `pull` 不能省。
+- 服务器访问 `ghcr.io` 不通时，可退回源码构建 `docker compose up -d --build`（compose 保留了 `build: .`）。
+
+数据在命名卷 `tracker-data` 中，切换构建方式不会丢数据；切勿执行 `docker compose down -v`。
 
 ### 服务器一键部署（无域名 / 仅自己使用）
 

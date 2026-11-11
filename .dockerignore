@@ -6,6 +6,7 @@ data/
 *.db
 .env
 .git/
+.github/
 .gitignore
 .dockerignore
 .idea/

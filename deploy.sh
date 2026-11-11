@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Media Tracker 单机部署：无域名、仅自己使用、全新空数据库
+# Media Tracker 单机部署（源码构建模式）：无域名、仅自己使用、全新空数据库
 # 用法：在服务器的项目目录中执行 bash deploy.sh（需能直接调用 docker）
+# 若使用 GHCR 预构建镜像，请改用：git pull && docker compose pull && docker compose up -d
 set -euo pipefail
 
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

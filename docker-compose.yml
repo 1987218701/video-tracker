@@ -1,5 +1,9 @@
 services:
   video-tracker:
+    # 服务器更新：docker compose pull && docker compose up -d
+    # GHCR 不可达时改用源码构建：docker compose up -d --build
+    # 固定版本/回滚：在 .env 里设 IMAGE_TAG=sha-xxxxxxx
+    image: ghcr.io/1987218701/video-tracker:${IMAGE_TAG:-latest}
     build: .
     container_name: video-tracker
     restart: unless-stopped
