@@ -36,6 +36,9 @@ HOST_PORT=$HOST_PORT
 TZ_OFFSET_HOURS=$TZ_OFFSET_HOURS
 EOF
   chmod 600 .env
+  if [ -n "${SUDO_USER:-}" ]; then
+    chown "$SUDO_USER":"$SUDO_USER" .env 2>/dev/null || true
+  fi
   echo "[*] 已生成 .env（随机 SECRET_KEY，权限 600）"
 fi
 
