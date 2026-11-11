@@ -3,685 +3,639 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视频追剧记录</title>
+    <title>Media Tracker</title>
+    <meta name="theme-color" content="#378ADD">
+    <meta name="description" content="个人多媒体追踪器：影视、教程、书籍进度管理">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.svg">
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        [v-cloak] { display: none; }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <div class="app-container">
-            <!-- 头部 -->
-            <header class="app-header">
-                <div class="header-content">
-                    <h1 class="app-title">视频追剧记录</h1>
-                    
-                    <!-- 统计栏 -->
-                    <div class="stats-bar">
-                        <div class="stat-card stat-total">
-                            <div class="stat-value">{{ stats.total }}</div>
-                            <div class="stat-label">总计</div>
-                        </div>
-                        <div class="stat-card" :style="{borderLeft: '4px solid #409eff'}">
-                            <div class="stat-value">{{ stats.watching }}</div>
-                            <div class="stat-label">在看</div>
-                        </div>
-                        <div class="stat-card" :style="{borderLeft: '4px solid #67c23a'}">
-                            <div class="stat-value">{{ stats.completed }}</div>
-                            <div class="stat-label">已看完</div>
-                        </div>
-                        <div class="stat-card stat-plan" @click="activeTab = 'plan'">
-                            <div class="stat-value">{{ stats.plan }}</div>
-                            <div class="stat-label">想看</div>
-                        </div>
-                    </div>
-                    
-                    <!-- 导航 -->
-                    <div class="nav-tabs">
-                        <button class="nav-tab" :class="{active: activeTab === 'main'}" @click="activeTab = 'main'">
-                            追剧记录
-                        </button>
-                        <button class="nav-tab" :class="{active: activeTab === 'plan'}" @click="activeTab = 'plan'">
-                            想看
-                        </button>
-                    </div>
-                </div>
-            </header>
-            
-            <!-- 主要内容 -->
-            <main class="app-main">
-                <!-- 追剧记录页 -->
-                <div v-show="activeTab === 'main'">
-                    <div class="toolbar-card">
-                        <div class="toolbar">
-                            <div class="toolbar-item search">
-                                <input type="text" v-model="filters.keyword" placeholder="搜索视频名称..." @input="debounceLoadVideos" class="search-input">
-                            </div>
-                            <div class="toolbar-item">
-                                <select v-model="filters.category" @change="loadVideos" class="filter-select">
-                                    <option value="">全部分类</option>
-                                    <option value="电视剧">电视剧</option>
-                                    <option value="电影">电影</option>
-                                    <option value="动漫">动漫</option>
-                                    <option value="综艺">综艺</option>
-                                    <option value="纪录片">纪录片</option>
-                                    <option value="其他">其他</option>
-                                </select>
-                            </div>
-                            <div class="toolbar-item">
-                                <select v-model="filters.status" @change="loadVideos" class="filter-select">
-                                    <option value="">全部状态</option>
-                                    <option value="在看">在看</option>
-                                    <option value="已看完">已看完</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="video-list" v-if="!loading">
-                        <div v-if="mainVideos.length === 0" class="empty-state">
-                            <div class="empty-icon">📺</div>
-                            <div class="empty-text">还没有记录，点击右下角加号开始添加</div>
-                        </div>
-                        <div class="video-grid">
-                            <div class="video-card" v-for="video in mainVideos" :key="video.id">
-                                <div class="card-header">
-                                    <div class="card-title">
-                                        <span class="category-icon">{{ getCategoryIcon(video.category) }}</span>
-                                        <span>{{ video.title }}</span>
-                                    </div>
-                                    <span class="status-tag" :class="getStatusClass(video.status)">{{ video.status }}</span>
-                                </div>
-                                <div class="card-content">
-                                    <div class="meta-line">
-                                        <span class="category-tag">{{ video.category }}</span>
-                                        <span v-if="video.note" class="note-text">{{ video.note.length > 15 ? video.note.slice(0, 15) + '...' : video.note }}</span>
-                                    </div>
-                                    <div class="progress-line" v-if="getProgressText(video)">
-                                        <span class="progress-value">{{ getProgressText(video) }}</span>
-                                        <span class="progress-label">{{ getProgressLabel(video) }}</span>
-                                    </div>
-                                </div>
-                                <div class="card-actions">
-                                    <button class="btn btn-primary" @click="editVideo(video)">编辑</button>
-                                    <button class="btn btn-danger" @click="confirmDelete(video)">删除</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else class="loading-state">加载中...</div>
-                </div>
-                
-                <!-- 想看页 -->
-                <div v-show="activeTab === 'plan'">
-                    <div class="plan-header">
-                        <h2>想看的视频</h2>
-                    </div>
-                    
-                    <div class="video-list" v-if="!loading">
-                        <div v-if="planVideos.length === 0" class="empty-state">
-                            <div class="empty-icon">📋</div>
-                            <div class="empty-text">还没有想看的视频，点击右下角爱心添加</div>
-                        </div>
-                        <div class="video-grid">
-                            <div class="video-card plan-card" v-for="video in planVideos" :key="video.id">
-                                <div class="card-header">
-                                    <div class="card-title">
-                                        <span class="category-icon">{{ getCategoryIcon(video.category) }}</span>
-                                        <span>{{ video.title }}</span>
-                                    </div>
-                                    <span class="status-tag status-plan">想看</span>
-                                </div>
-                                <div class="card-content">
-                                    <div class="meta-line">
-                                        <span class="category-tag">{{ video.category }}</span>
-                                        <span v-if="video.note" class="note-text">{{ video.note.length > 20 ? video.note.slice(0, 20) + '...' : video.note }}</span>
-                                    </div>
-                                </div>
-                                <div class="card-actions">
-                                    <button class="btn btn-primary" @click="startWatching(video)">开始看</button>
-                                    <button class="btn btn-secondary" @click="editVideo(video)">编辑</button>
-                                    <button class="btn btn-danger" @click="confirmDelete(video)">删除</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div v-else class="loading-state">加载中...</div>
-                </div>
-            </main>
-            
-            <!-- 悬浮添加按钮 - 追剧记录 -->
-            <button class="fab-add fab-main" @click="openModal()" v-show="activeTab === 'main'">
-                <span class="fab-icon">+</span>
+<div id="app" v-cloak>
+
+    <!-- Top Nav Bar -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <div class="topbar-brand">Media Tracker</div>
+            <nav class="topbar-nav">
+                <button v-for="tab in tabs" :key="tab.key"
+                    :class="['topbar-tab', {active: activeTab === tab.key}]"
+                    @click="switchTab(tab.key)">
+                    <span class="tab-icon">{{ tab.icon }}</span>
+                    <span class="tab-label">{{ tab.label }}</span>
+                </button>
+            </nav>
+            <button class="search-toggle" @click="toggleSearch" title="搜索">
+                <span v-if="!searchVisible">&#x1F50D;</span>
+                <span v-else>&#x2715;</span>
             </button>
-            
-            <!-- 悬浮添加按钮 - 想看 -->
-            <button class="fab-add fab-plan" @click="openAddPlanModal()" v-show="activeTab === 'plan'">
-                <span class="fab-icon">❤</span>
+        </div>
+
+        <!-- Expandable Search Bar -->
+        <transition name="slide-down">
+            <div v-if="searchVisible" class="search-bar">
+                <input type="text" ref="searchInput" class="search-input"
+                    v-model="filters.keyword"
+                    placeholder="输入关键词搜索..."
+                    @input="debounceLoad"
+                    @keyup.esc="closeSearch">
+                <button class="search-clear" v-if="filters.keyword" @click="clearSearch">&#x2715;</button>
+            </div>
+        </transition>
+    </header>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" v-if="activeTab !== 'stats'">
+        <div class="status-filters">
+            <button :class="['status-chip', {active: filters.status === ''}]"
+                @click="setStatus('')">
+                全部 <span class="chip-count">{{ tabStats.total }}</span>
             </button>
-            
-            <!-- Toast 提示 -->
-            <div v-if="toast.show" class="toast" :class="toast.type">
-                <div class="toast-content">
-                    <span class="toast-icon">{{ toast.icon }}</span>
-                    <span>{{ toast.message }}</span>
+            <button v-for="s in statusOptions" :key="s.value"
+                :class="['status-chip', s.cls, {active: filters.status === s.value}]"
+                @click="setStatus(s.value)">
+                <span class="chip-icon">{{ s.icon }}</span>
+                <span>{{ s.label }}</span>
+                <span class="chip-count" v-if="s.value === '在看'">{{ tabStats.watching }}</span>
+                <span class="chip-count" v-else-if="s.value === '已看完'">{{ tabStats.completed }}</span>
+                <span class="chip-count" v-else-if="s.value === '想看'">{{ tabStats.plan }}</span>
+            </button>
+        </div>
+        <select class="sort-select" v-model="filters.sort" @change="loadItems">
+            <option value="updated">最近更新</option>
+            <option value="created">最近添加</option>
+            <option value="rating">评分最高</option>
+            <option value="title">标题排序</option>
+        </select>
+    </div>
+
+    <!-- Content -->
+    <main class="main">
+
+        <!-- ==================== Stats Page ==================== -->
+        <div class="stats-page" v-if="activeTab === 'stats'">
+            <div class="stats-header">
+                <div>
+                    <h2 class="stats-title">数据统计</h2>
+                    <p class="stats-subtitle">共 {{ stats.total }} 条记录 · {{ stats.history_count }} 条变更记录</p>
+                </div>
+                <div class="stats-actions">
+                    <button class="btn-secondary" @click="exportCsv">导出 CSV</button>
+                    <label class="btn-secondary file-btn">
+                        导入 CSV
+                        <input type="file" accept=".csv,text/csv" @change="importCsv" ref="csvInput" hidden>
+                    </label>
+                </div>
+            </div>
+
+            <div class="stat-cards">
+                <div v-for="c in overviewCards" :key="c.label"
+                    :class="['stat-card', 'stat-card--' + c.tone]">
+                    <div class="stat-card-head">
+                        <span class="stat-icon">{{ c.icon }}</span>
+                        <span class="stat-label">{{ c.label }}</span>
+                    </div>
+                    <div class="stat-num">
+                        {{ c.value }}<span class="stat-unit" v-if="c.unit">{{ c.unit }}</span>
+                    </div>
+                    <div class="stat-progress">
+                        <span :style="{width: c.percent + '%'}"></span>
+                    </div>
+                    <div class="stat-foot">{{ c.foot }}</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-head">
+                    <h3>活跃日历</h3>
+                    <span class="panel-note">近 {{ activityDays }} 天 · 活跃 {{ activity.active_days }} 天 · 共 {{ activity.total }} 次记录</span>
+                </div>
+                <div class="heatmap-wrap">
+                    <div class="heatmap-days">
+                        <span></span><span>一</span><span></span><span>三</span><span></span><span>五</span><span></span>
+                    </div>
+                    <div class="heatmap-grid">
+                        <div class="heatmap-week" v-for="(week, wi) in heatmapWeeks" :key="wi">
+                            <div v-for="(cell, di) in week" :key="di"
+                                :class="['heatmap-cell', cell ? 'level-' + cell.level : 'empty']"
+                                :title="cell ? cell.date + ' · ' + cell.count + ' 次' : ''">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="heatmap-legend">
+                    <span>少</span>
+                    <span class="heatmap-cell level-0"></span>
+                    <span class="heatmap-cell level-1"></span>
+                    <span class="heatmap-cell level-2"></span>
+                    <span class="heatmap-cell level-3"></span>
+                    <span class="heatmap-cell level-4"></span>
+                    <span>多</span>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="panel">
+                    <div class="panel-head"><h3>状态分布</h3><span class="panel-note">共 {{ stats.total }} 条</span></div>
+                    <div class="bar-list">
+                        <div class="bar-row" v-for="s in statusBars" :key="s.label">
+                            <span class="bar-label">{{ s.label }}</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" :style="{width: s.percent + '%', background: s.color}"></div>
+                            </div>
+                            <span class="bar-value">{{ s.value }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head"><h3>类型分布</h3><span class="panel-note">影视 / 教程 / 书籍</span></div>
+                    <div class="bar-list">
+                        <div class="bar-row" v-for="t in typeBars" :key="t.label">
+                            <span class="bar-label">{{ t.label }}</span>
+                            <div class="bar-track">
+                                <div class="bar-fill" :style="{width: t.percent + '%', background: t.color}"></div>
+                            </div>
+                            <span class="bar-value">{{ t.value }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-head"><h3>评分分布</h3><span class="panel-note">满分 5 星</span></div>
+                    <div class="rating-bars">
+                        <div class="rating-bar-col" v-for="n in 5" :key="n">
+                            <div class="rating-bar-value">{{ stats.rating_distribution[n] || 0 }}</div>
+                            <div class="rating-bar-track">
+                                <div class="rating-bar-fill"
+                                    :style="{height: ratingBarHeight(stats.rating_distribution[n] || 0) + '%'}"></div>
+                            </div>
+                            <div class="rating-bar-label">{{ n }}★</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel--wide">
+                    <div class="panel-head">
+                        <h3>最近动态</h3>
+                        <button class="btn-mini" @click="loadRecentActivity">刷新</button>
+                    </div>
+                    <div class="timeline" v-if="recentActivity.length">
+                        <div class="timeline-item" v-for="a in recentActivity" :key="a.id">
+                            <span class="timeline-dot" :style="{background: typeColor(a.type)}"></span>
+                            <div class="timeline-body">
+                                <div class="timeline-title">{{ a.title }}</div>
+                                <div class="timeline-summary">{{ a.summary }}</div>
+                            </div>
+                            <span class="timeline-time">{{ formatTime(a.created_at) }}</span>
+                        </div>
+                    </div>
+                    <p v-else class="form-hint">暂无动态</p>
                 </div>
             </div>
         </div>
-        
-        <!-- 添加/编辑弹窗 -->
-        <div v-if="dialogVisible" class="modal-overlay" @click.self="dialogVisible = false">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>{{ editingVideo ? '编辑视频记录' : '添加视频记录' }}</h2>
-                    <button class="modal-close" @click="dialogVisible = false">×</button>
+
+        <!-- ==================== List Page ==================== -->
+        <template v-if="activeTab !== 'stats'">
+            <div class="content" v-if="!loading">
+                <div v-if="items.length === 0" class="empty-state">
+                    <div class="empty-icon">{{ currentTabIcon }}</div>
+                    <p>暂无记录，点击右下角 + 添加</p>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label required">标题</label>
-                        <input type="text" v-model="form.title" placeholder="请输入视频名称" class="form-input">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label required">分类</label>
-                            <select v-model="form.category" class="form-select">
-                                <option value="电视剧">电视剧</option>
-                                <option value="电影">电影</option>
-                                <option value="动漫">动漫</option>
-                                <option value="综艺">综艺</option>
-                                <option value="纪录片">纪录片</option>
-                                <option value="其他">其他</option>
-                            </select>
+
+                <div class="card-grid" v-else>
+                    <div v-for="item in items" :key="item.id"
+                        :class="['card', typeClass(item.type)]"
+                        @click="openDetail(item)">
+
+                        <div v-if="item.cover_url" class="card-cover"
+                            :style="{backgroundImage: 'url(' + item.cover_url + ')'}"></div>
+
+                        <div class="card-top">
+                            <span class="card-type-badge" :style="{background: typeColor(item.type)}">
+                                {{ typeLabel(item.type) }}
+                            </span>
+                            <span :class="['status-tag', statusClass(item.status)]">
+                                {{ statusIcon(item.status) }} {{ item.status }}
+                            </span>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label required">状态</label>
-                            <select v-model="form.status" class="form-select">
-                                <option value="在看">在看</option>
-                                <option value="已看完">已看完</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- 剧集进度 - 非电影显示 -->
-                    <div class="form-section" v-if="form.category !== '电影'">
-                        <div class="section-title">📺 剧集进度</div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">总集数（可选，不填表示连载中）</label>
-                                <input type="number" v-model="form.total_episodes" min="0" placeholder="如: 24" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">当前看到</label>
-                                <input type="number" v-model="form.current_episode" min="0" placeholder="如: 12" class="form-input">
+
+                        <h3 class="card-title">{{ item.title }}</h3>
+                        <p class="card-category" v-if="item.category">{{ item.category }}</p>
+
+                        <div class="card-progress" v-if="getProgressText(item)">
+                            <span class="progress-text">{{ getProgressText(item) }}</span>
+                            <div class="progress-bar" v-if="getProgressPercent(item) !== null">
+                                <div class="progress-fill"
+                                    :style="{width: getProgressPercent(item) + '%', background: typeColor(item.type)}">
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">本集已看(分钟)（不填默认本集看完）</label>
-                            <input type="number" v-model="form.current_episode_minutes" min="0" placeholder="如: 15" class="form-input">
+
+                        <div class="card-bottom">
+                            <div class="rating" v-if="item.rating">
+                                <span v-for="n in 5" :key="n"
+                                    :class="['star', {filled: n <= item.rating}]">&#9733;</span>
+                            </div>
+                            <span v-else class="no-rating">未评分</span>
+                            <div class="card-actions">
+                                <button class="btn-mini" @click.stop="openEditDialog(item)">编辑</button>
+                                <button class="btn-mini btn-danger-mini" @click.stop="confirmDelete(item)">删除</button>
+                            </div>
                         </div>
                     </div>
-                    
-                    <!-- 电影进度 - 仅电影显示 -->
-                    <div class="form-section" v-if="form.category === '电影'">
-                        <div class="section-title">🎬 电影进度</div>
-                        <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 12px;">电影通过"状态"标记是否看完</p>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">备注</label>
-                        <textarea v-model="form.note" rows="3" placeholder="添加备注（可选）" class="form-textarea"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @click="dialogVisible = false">取消</button>
-                    <button class="btn btn-primary" @click="saveVideo" :disabled="saving">{{ saving ? '保存中...' : '保存' }}</button>
                 </div>
             </div>
-        </div>
-        
-        <!-- 添加想看弹窗 -->
-        <div v-if="planDialogVisible" class="modal-overlay" @click.self="planDialogVisible = false">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>添加想看的视频</h2>
-                    <button class="modal-close" @click="planDialogVisible = false">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label class="form-label required">视频名称</label>
-                        <input type="text" v-model="planForm.title" placeholder="请输入视频名称" class="form-input">
+            <div v-else class="loading-state">加载中...</div>
+
+            <div class="pagination" v-if="totalPages > 1">
+                <button @click="changePage(-1)" :disabled="page === 1">上一页</button>
+                <span>{{ page }} / {{ totalPages }}</span>
+                <button @click="changePage(1)" :disabled="page === totalPages">下一页</button>
+            </div>
+        </template>
+    </main>
+
+    <!-- Floating Add Button -->
+    <button class="fab" @click="openAddDialog" title="添加记录">
+        <span class="fab-icon">+</span>
+    </button>
+
+    <!-- Add/Edit Dialog -->
+    <div v-if="dialogVisible" class="modal-overlay" @click.self="dialogVisible = false">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>{{ editingItem ? '编辑记录' : '添加记录' }}</h3>
+                <button class="modal-close" @click="dialogVisible = false">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label required">标题</label>
+                    <div class="title-row">
+                        <input type="text" v-model="form.title" class="form-input" placeholder="名称">
+                        <button v-if="form.type === 'video'" class="btn-mini lookup-btn"
+                            @click="searchMetadata" :disabled="metadataLoading">
+                            {{ metadataLoading ? '搜索中...' : '搜索补全' }}
+                        </button>
                     </div>
-                    
+                    <p v-if="metadataHint" class="form-hint metadata-hint">{{ metadataHint }}</p>
+                    <div class="metadata-results" v-if="metadataResults.length">
+                        <div class="metadata-item" v-for="r in metadataResults" :key="r.id"
+                            @click="applyMetadata(r)">
+                            <div class="metadata-poster"
+                                :style="r.cover_url ? {backgroundImage: 'url(' + r.cover_url + ')'} : {}"></div>
+                            <div class="metadata-info">
+                                <div class="metadata-title">{{ r.title }} <span v-if="r.year">({{ r.year }})</span></div>
+                                <div class="metadata-overview">{{ r.overview || '暂无简介' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <p v-if="metadataEnabled && form.type === 'video'" class="form-hint tmdb-attribution">
+                        This product uses the TMDB API but is not endorsed or certified by TMDB.
+                        Data and poster images from
+                        <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">TMDB</a>.
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label required">类型</label>
+                    <div class="type-selector">
+                        <button v-for="t in typeOptions" :key="t.value"
+                            :class="['type-btn', {active: form.type === t.value}]"
+                            @click="selectType(t.value)">
+                            <span>{{ t.icon }}</span>
+                            <span>{{ t.label }}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        分类
+                        <span v-if="form.type === 'video'" class="form-label-note">可多选；「电影 / 电视剧」决定进度模式</span>
+                    </label>
+                    <div v-if="form.type === 'video'" class="category-tags">
+                        <button type="button" v-for="c in categoryOptions" :key="c"
+                            :class="['category-tag', { active: form.categories.includes(c), format: isFormatTag(c) }]"
+                            @click="toggleCategory(c)">{{ c }}</button>
+                    </div>
+                    <select v-else v-model="form.category" class="form-select">
+                        <option v-for="c in categoryOptions" :key="c" :value="c">{{ c }}</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label required">分类</label>
-                        <select v-model="planForm.category" class="form-select">
-                            <option value="电视剧">电视剧</option>
-                            <option value="电影">电影</option>
-                            <option value="动漫">动漫</option>
-                            <option value="综艺">综艺</option>
-                            <option value="纪录片">纪录片</option>
-                            <option value="其他">其他</option>
+                        <label class="form-label required">状态</label>
+                        <select v-model="form.status" class="form-select">
+                            <option value="想看">想看</option>
+                            <option value="在看">在看</option>
+                            <option value="已看完">已看完</option>
+                            <!-- 兼容历史「弃置」记录：不丢数据，保存时可改成上面三种状态 -->
+                            <option v-if="!statusOptions.some(s => s.value === form.status)"
+                                :value="form.status">{{ form.status }}（历史）</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
-                        <label class="form-label">备注</label>
-                        <textarea v-model="planForm.note" rows="3" placeholder="添加备注（可选）" class="form-textarea"></textarea>
+                        <label class="form-label">评分</label>
+                        <div class="star-picker">
+                            <span v-for="n in 5" :key="n"
+                                :class="['star-lg', {filled: n <= (form.rating || 0)}]"
+                                @click="form.rating = n"
+                                @dblclick="form.rating = 0">&#9733;</span>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @click="planDialogVisible = false">取消</button>
-                    <button class="btn btn-primary" @click="savePlanVideo" :disabled="saving">{{ saving ? '保存中...' : '保存' }}</button>
+
+                <!-- Video: TV mode -->
+                <div class="form-section" v-if="form.type === 'video' && videoMode === 'tv'">
+                    <div class="section-title">
+                        <span>&#x1F4FA; 剧集进度</span>
+                        <span class="mode-hint">
+                            分类「{{ categoryText }}」· 如需按时长记录，
+                            <button class="mode-switch" @click="switchVideoMode('movie')">切换为电影模式</button>
+                        </span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总集数</label>
+                            <input type="number" v-model="form.total_count" class="form-input"
+                                placeholder="如 30" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">当前看到</label>
+                            <input type="number" v-model="form.current_position" class="form-input"
+                                placeholder="如 8" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">本集已看（分钟）</label>
+                        <input type="number" v-model="form.current_minutes" class="form-input"
+                            placeholder="可选" min="0">
+                    </div>
+                </div>
+
+                <!-- Video: Movie mode -->
+                <div class="form-section" v-if="form.type === 'video' && videoMode === 'movie'">
+                    <div class="section-title">
+                        <span>&#x1F3AC; 电影进度</span>
+                        <span class="mode-hint">
+                            分类「{{ categoryText }}」· 如需按集数记录，
+                            <button class="mode-switch" @click="switchVideoMode('tv')">切换为剧集模式</button>
+                        </span>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总时长（分钟）</label>
+                            <input type="number" v-model="form.total_duration_min" class="form-input"
+                                placeholder="如 120" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">已看时长（分钟）</label>
+                            <input type="number" v-model="form.current_duration_min" class="form-input"
+                                placeholder="如 60" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tutorial fields -->
+                <div class="form-section" v-if="form.type === 'tutorial'">
+                    <div class="section-title">&#x1F4CB; 教程进度</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总节数</label>
+                            <input type="number" v-model="form.total_count" class="form-input"
+                                placeholder="如 20" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">当前节</label>
+                            <input type="number" v-model="form.current_position" class="form-input"
+                                placeholder="如 5" min="0">
+                        </div>
+                    </div>
+                    <p class="form-hint">保存后可在详情中管理具体章节列表</p>
+                </div>
+
+                <!-- Book fields -->
+                <div class="form-section" v-if="form.type === 'book'">
+                    <div class="section-title">&#x1F4D6; 书籍进度</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">总页数</label>
+                            <input type="number" v-model="form.total_pages" class="form-input"
+                                placeholder="如 320" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">当前页</label>
+                            <input type="number" v-model="form.current_page" class="form-input"
+                                placeholder="如 120" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">封面图链接</label>
+                        <input type="url" v-model="form.cover_url" class="form-input"
+                            placeholder="https://...（可选）">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">外部链接</label>
+                        <input type="url" v-model="form.external_url" class="form-input"
+                            placeholder="豆瓣 / TMDB / B站（可选）">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">
+                        {{ form.type === 'video' ? '简介' : '备注' }}
+                        <span v-if="form.type === 'video'" class="form-label-note">可由 TMDB 自动填充，也可手动修改</span>
+                    </label>
+                    <textarea v-model="form.note" class="form-textarea"
+                        :rows="form.type === 'video' ? 4 : 3"
+                        :placeholder="form.type === 'video'
+                            ? '影视简介，点标题右侧「搜索补全」自动填入'
+                            : '可选'"></textarea>
                 </div>
             </div>
-        </div>
-        
-        <!-- 删除确认弹窗 -->
-        <div v-if="deleteDialogVisible" class="modal-overlay" @click.self="deleteDialogVisible = false">
-            <div class="modal-content delete-modal">
-                <div class="modal-header">
-                    <h2>确认删除</h2>
-                    <button class="modal-close" @click="deleteDialogVisible = false">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="delete-content">
-                        <p>确定要删除以下视频记录吗？</p>
-                        <p class="delete-title">{{ deletingVideo ? deletingVideo.title : '' }}</p>
-                        <p class="delete-warning">此操作不可撤销</p>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @click="deleteDialogVisible = false">取消</button>
-                    <button class="btn btn-danger" @click="deleteVideo" :disabled="deleting">{{ deleting ? '删除中...' : '删除' }}</button>
-                </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @click="dialogVisible = false">取消</button>
+                <button class="btn-primary" @click="saveItem" :disabled="saving">
+                    {{ saving ? '...' : '保存' }}
+                </button>
             </div>
         </div>
     </div>
-    
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-    <script>
-        const { createApp, ref, reactive, onMounted, watch, computed, nextTick } = Vue;
-        
-        const app = createApp({
-            setup() {
-                const videos = ref([]);
-                const stats = ref({ total: 0, watching: 0, completed: 0, plan: 0 });
-                const loading = ref(false);
-                const saving = ref(false);
-                const deleting = ref(false);
-                const dialogVisible = ref(false);
-                const planDialogVisible = ref(false);
-                const deleteDialogVisible = ref(false);
-                const editingVideo = ref(null);
-                const deletingVideo = ref(null);
-                const activeTab = ref('main');
-                let searchTimer = null;
-                let toastTimer = null;
-                
-                const toast = reactive({
-                    show: false,
-                    message: '',
-                    type: 'success',
-                    icon: '✅'
-                });
-                
-                const filters = reactive({
-                    keyword: '',
-                    category: '',
-                    status: ''
-                });
-                
-                const form = reactive({
-                    title: '',
-                    category: '电视剧',
-                    status: '在看',
-                    total_episodes: '',
-                    current_episode: '',
-                    total_duration_min: '',
-                    current_duration_min: '',
-                    current_episode_minutes: '',
-                    note: ''
-                });
-                
-                const planForm = reactive({
-                    title: '',
-                    category: '电视剧',
-                    note: ''
-                });
-                
-                // 显示 toast
-                const showToast = (message, type = 'success') => {
-                    if (toastTimer) {
-                        clearTimeout(toastTimer);
-                    }
-                    
-                    toast.message = message;
-                    toast.type = type;
-                    toast.icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-                    toast.show = true;
-                    
-                    toastTimer = setTimeout(() => {
-                        toast.show = false;
-                    }, 2000);
-                };
-                
-                // 过滤视频
-                const mainVideos = computed(() => {
-                    return videos.value.filter(v => v.status !== '想看');
-                });
-                
-                const planVideos = computed(() => {
-                    return videos.value.filter(v => v.status === '想看');
-                });
-                
-                // 监听分类变化，清空对应的字段
-                watch(() => form.category, (newCat) => {
-                    if (newCat === '电影') {
-                        form.total_episodes = '';
-                        form.current_episode = '';
-                        form.current_episode_minutes = '';
-                    } else {
-                        form.total_duration_min = '';
-                        form.current_duration_min = '';
-                    }
-                });
-                
-                const getCategoryIcon = (category) => {
-                    const icons = { '电视剧': '📺', '电影': '🎬', '动漫': '🎮', '综艺': '🎤', '纪录片': '📄' };
-                    return icons[category] || '📹';
-                };
-                
-                const getStatusClass = (status) => {
-                    const classes = { '在看': 'status-watching', '已看完': 'status-completed' };
-                    return classes[status] || 'status-default';
-                };
-                
-                const getProgressText = (video) => {
-                    // 电影只有状态，不用显示进度
-                    if (video.category === '电影' || video.status === '想看') {
-                        return '';
-                    }
-                    
-                    const totalEpisodes = parseInt(video.total_episodes);
-                    const currentEpisode = parseInt(video.current_episode);
-                    const currentMinutes = parseInt(video.current_episode_minutes);
-                    
-                    if (!isNaN(totalEpisodes)) {
-                        let text = (isNaN(currentEpisode) ? 0 : currentEpisode) + '/' + totalEpisodes;
-                        if (!isNaN(currentMinutes)) {
-                            text += ' (' + currentMinutes + '分钟)';
-                        } else if (!isNaN(currentEpisode) && currentEpisode > 0) {
-                            text += ' (本集已看完)';
-                        }
-                        return text;
-                    }
-                    
-                    if (!isNaN(currentEpisode) && currentEpisode > 0) {
-                        let text = '已看 ' + currentEpisode + ' 集';
-                        if (!isNaN(currentMinutes)) {
-                            text += ' (' + currentMinutes + '分钟)';
-                        } else {
-                            text += ' (连载中)';
-                        }
-                        return text;
-                    }
-                    
-                    return '';
-                };
-                
-                const getProgressLabel = (video) => {
-                    if (video.category === '电影' || video.status === '想看') {
-                        return '';
-                    }
-                    
-                    const totalEpisodes = parseInt(video.total_episodes);
-                    if (!isNaN(totalEpisodes)) {
-                        return '集数';
-                    }
-                    return '进度';
-                };
-                
-                const loadStats = async () => {
-                    try {
-                        const resp = await fetch('/api/videos/stats');
-                        const data = await resp.json();
-                        stats.value = data;
-                    } catch (e) {
-                        console.error('加载统计失败:', e);
-                    }
-                };
-                
-                const loadVideos = async () => {
-                    loading.value = true;
-                    try {
-                        let url = '/api/videos';
-                        const params = new URLSearchParams();
-                        if (filters.keyword) params.set('keyword', filters.keyword);
-                        if (filters.category) params.set('category', filters.category);
-                        if (filters.status) params.set('status', filters.status);
-                        if (params.toString()) url += '?' + params.toString();
-                        
-                        const resp = await fetch(url);
-                        const data = await resp.json();
-                        videos.value = data;
-                        await loadStats();
-                    } catch (e) {
-                        console.error('加载失败:', e);
-                    } finally {
-                        loading.value = false;
-                    }
-                };
-                
-                const debounceLoadVideos = () => {
-                    if (searchTimer) clearTimeout(searchTimer);
-                    searchTimer = setTimeout(loadVideos, 300);
-                };
-                
-                const openModal = (video) => {
-                    editingVideo.value = video || null;
-                    if (video) {
-                        form.title = video.title;
-                        form.category = video.category;
-                        form.status = video.status;
-                        form.total_episodes = video.total_episodes || '';
-                        form.current_episode = video.current_episode || '';
-                        form.total_duration_min = video.total_duration_min || '';
-                        form.current_duration_min = video.current_duration_min || '';
-                        form.current_episode_minutes = video.current_episode_minutes || '';
-                        form.note = video.note || '';
-                    } else {
-                        form.title = '';
-                        form.category = '电视剧';
-                        form.status = '在看';
-                        form.total_episodes = '';
-                        form.current_episode = '';
-                        form.total_duration_min = '';
-                        form.current_duration_min = '';
-                        form.current_episode_minutes = '';
-                        form.note = '';
-                    }
-                    dialogVisible.value = true;
-                };
-                
-                const openAddPlanModal = () => {
-                    planForm.title = '';
-                    planForm.category = '电视剧';
-                    planForm.note = '';
-                    planDialogVisible.value = true;
-                };
-                
-                const startWatching = async (video) => {
-                    try {
-                        const data = {
-                            title: video.title,
-                            category: video.category,
-                            status: '在看',
-                            total_episodes: video.total_episodes,
-                            current_episode: 1,
-                            current_episode_minutes: null,
-                            note: video.note
-                        };
-                        
-                        const resp = await fetch('/api/videos/' + video.id, {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(data)
-                        });
-                        
-                        if (!resp.ok) throw new Error('操作失败');
-                        
-                        showToast('已开始观看！');
-                        loadVideos();
-                        activeTab.value = 'main';
-                    } catch (e) {
-                        console.error('保存失败:', e);
-                        showToast('操作失败，请重试', 'error');
-                    }
-                };
-                
-                const validateForm = () => {
-                    if (!form.title || form.title.trim() === '') {
-                        showToast('请输入标题', 'error');
-                        return false;
-                    }
-                    return true;
-                };
-                
-                const validatePlanForm = () => {
-                    if (!planForm.title || planForm.title.trim() === '') {
-                        showToast('请输入视频名称', 'error');
-                        return false;
-                    }
-                    return true;
-                };
-                
-                const saveVideo = async () => {
-                    if (!validateForm()) return;
-                    
-                    saving.value = true;
-                    try {
-                        const data = {
-                            title: form.title.trim(),
-                            category: form.category,
-                            status: form.status,
-                            total_episodes: form.total_episodes ? parseInt(form.total_episodes) : null,
-                            current_episode: form.current_episode ? parseInt(form.current_episode) : null,
-                            total_duration_min: form.total_duration_min ? parseInt(form.total_duration_min) : null,
-                            current_duration_min: form.current_duration_min ? parseInt(form.current_duration_min) : null,
-                            current_episode_minutes: form.current_episode_minutes ? parseInt(form.current_episode_minutes) : null,
-                            note: form.note.trim()
-                        };
-                        
-                        let url, method;
-                        if (editingVideo.value) {
-                            url = '/api/videos/' + editingVideo.value.id;
-                            method = 'PUT';
-                        } else {
-                            url = '/api/videos';
-                            method = 'POST';
-                        }
-                        
-                        const resp = await fetch(url, {
-                            method: method,
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(data)
-                        });
-                        
-                        if (!resp.ok) throw new Error('操作失败');
-                        
-                        showToast(editingVideo.value ? '更新成功' : '添加成功');
-                        dialogVisible.value = false;
-                        loadVideos();
-                    } catch (e) {
-                        console.error('保存失败:', e);
-                        showToast('保存失败，请重试', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const savePlanVideo = async () => {
-                    if (!validatePlanForm()) return;
-                    
-                    saving.value = true;
-                    try {
-                        const data = {
-                            title: planForm.title.trim(),
-                            category: planForm.category,
-                            status: '想看',
-                            total_episodes: null,
-                            current_episode: null,
-                            total_duration_min: null,
-                            current_duration_min: null,
-                            current_episode_minutes: null,
-                            note: planForm.note.trim()
-                        };
-                        
-                        const resp = await fetch('/api/videos', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(data)
-                        });
-                        
-                        if (!resp.ok) throw new Error('操作失败');
-                        
-                        showToast('添加成功！');
-                        planDialogVisible.value = false;
-                        loadVideos();
-                    } catch (e) {
-                        console.error('保存失败:', e);
-                        showToast('保存失败，请重试', 'error');
-                    } finally {
-                        saving.value = false;
-                    }
-                };
-                
-                const editVideo = (video) => {
-                    openModal(video);
-                };
-                
-                const confirmDelete = (video) => {
-                    deletingVideo.value = video;
-                    deleteDialogVisible.value = true;
-                };
-                
-                const deleteVideo = async () => {
-                    if (!deletingVideo.value) return;
-                    
-                    deleting.value = true;
-                    try {
-                        const resp = await fetch('/api/videos/' + deletingVideo.value.id, { method: 'DELETE' });
-                        if (!resp.ok) throw new Error('删除失败');
-                        
-                        showToast('删除成功');
-                        deleteDialogVisible.value = false;
-                        loadVideos();
-                    } catch (e) {
-                        showToast('删除失败', 'error');
-                    } finally {
-                        deleting.value = false;
-                    }
-                };
-                
-                onMounted(() => {
-                    loadVideos();
-                });
-                
-                return {
-                    videos, stats, loading, saving, deleting,
-                    dialogVisible, planDialogVisible, deleteDialogVisible, 
-                    editingVideo, deletingVideo,
-                    form, planForm, filters, activeTab,
-                    toast,
-                    mainVideos, planVideos,
-                    debounceLoadVideos, loadVideos, 
-                    openModal, openAddPlanModal, startWatching,
-                    saveVideo, savePlanVideo, editVideo, confirmDelete, deleteVideo,
-                    getCategoryIcon, getStatusClass, getProgressText, getProgressLabel
-                };
-            }
+
+    <!-- Detail Dialog -->
+    <div v-if="detailVisible" class="modal-overlay" @click.self="detailVisible = false">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3>{{ detailItem ? detailItem.title : '' }}</h3>
+                <button class="modal-close" @click="detailVisible = false">&times;</button>
+            </div>
+            <div class="modal-body" v-if="detailItem">
+                <div v-if="detailItem.cover_url" class="detail-cover"
+                    :style="{backgroundImage: 'url(' + detailItem.cover_url + ')'}"></div>
+                <div class="detail-meta">
+                    <span class="card-type-badge" :style="{background: typeColor(detailItem.type)}">
+                        {{ typeLabel(detailItem.type) }}
+                    </span>
+                    <span :class="['status-tag', statusClass(detailItem.status)]">
+                        {{ statusIcon(detailItem.status) }} {{ detailItem.status }}
+                    </span>
+                    <span class="detail-category" v-if="detailItem.category">{{ detailItem.category }}</span>
+                </div>
+
+                <div class="detail-rating" v-if="detailItem.rating">
+                    <span v-for="n in 5" :key="n"
+                        :class="['star-lg', {filled: n <= detailItem.rating}]">&#9733;</span>
+                </div>
+
+                <div class="detail-progress" v-if="getProgressText(detailItem)">
+                    <span class="progress-text-lg">{{ getProgressText(detailItem) }}</span>
+                    <div class="progress-bar-lg" v-if="getProgressPercent(detailItem) !== null">
+                        <div class="progress-fill-lg"
+                            :style="{width: getProgressPercent(detailItem) + '%', background: typeColor(detailItem.type)}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-note" v-if="detailItem.note">
+                    <div class="detail-note-title">{{ detailItem.type === 'video' ? '简介' : '备注' }}</div>
+                    <p>{{ detailItem.note }}</p>
+                </div>
+
+                <div class="chapters-section" v-if="detailItem.type === 'tutorial'">
+                    <div class="chapters-header">
+                        <span class="section-title">章节列表</span>
+                        <button class="btn-mini" @click="showAddChapter = !showAddChapter">+ 章节</button>
+                    </div>
+
+                    <div class="chapter-add-row" v-if="showAddChapter">
+                        <input type="text" v-model="newChapterTitle" class="form-input"
+                            placeholder="章节名称" @keyup.enter="addChapter">
+                        <button class="btn-mini btn-primary-mini" @click="addChapter">添加</button>
+                    </div>
+
+                    <div class="chapter-list" v-if="detailChapters.length">
+                        <div v-for="ch in detailChapters" :key="ch.id" class="chapter-item">
+                            <label class="chapter-check">
+                                <input type="checkbox" :checked="ch.completed === 1"
+                                    @change="toggleChapter(ch)">
+                                <span class="chapter-seq">第{{ ch.seq }}节</span>
+                                <span :class="['chapter-title', {done: ch.completed === 1}]">{{ ch.title }}</span>
+                            </label>
+                            <button class="btn-mini btn-danger-mini" @click="deleteChapter(ch)">删</button>
+                        </div>
+                    </div>
+                    <p v-else class="form-hint">还没有章节，点击「+ 章节」添加</p>
+                </div>
+
+                <div class="chapters-section">
+                    <div class="chapters-header">
+                        <span class="section-title">变更历史</span>
+                        <span class="panel-note" v-if="detailItem.rewatch_count">
+                            已重看 {{ detailItem.rewatch_count }} 次
+                        </span>
+                    </div>
+                    <div class="timeline detail-timeline" v-if="detailHistory.length">
+                        <div class="timeline-item" v-for="h in detailHistory" :key="h.id">
+                            <span class="timeline-dot" :style="{background: historyColor(h.action)}"></span>
+                            <div class="timeline-body">
+                                <div class="timeline-summary">{{ h.summary }}</div>
+                            </div>
+                            <span class="timeline-time">{{ formatTime(h.created_at) }}</span>
+                        </div>
+                    </div>
+                    <p v-else class="form-hint">暂无变更记录</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a v-if="detailItem && detailItem.external_url" class="btn-secondary external-link"
+                    :href="detailItem.external_url" target="_blank" rel="noopener noreferrer">打开外部链接</a>
+                <button class="btn-secondary" @click="detailVisible = false">关闭</button>
+                <button class="btn-primary" @click="openEditDialog(detailItem); detailVisible = false">编辑</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirm (shows full item info) -->
+    <div v-if="deleteVisible" class="modal-overlay" @click.self="deleteVisible = false">
+        <div class="modal modal-small">
+            <div class="modal-header">
+                <h3>确认删除</h3>
+                <button class="modal-close" @click="deleteVisible = false">&times;</button>
+            </div>
+            <div class="modal-body" v-if="deletingItem">
+                <div class="delete-info-card">
+                    <div class="delete-info-row">
+                        <span class="delete-info-label">类型</span>
+                        <span class="card-type-badge" :style="{background: typeColor(deletingItem.type)}">
+                            {{ typeLabel(deletingItem.type) }}
+                        </span>
+                    </div>
+                    <div class="delete-info-row">
+                        <span class="delete-info-label">标题</span>
+                        <span class="delete-info-value">{{ deletingItem.title }}</span>
+                    </div>
+                    <div class="delete-info-row" v-if="deletingItem.category">
+                        <span class="delete-info-label">分类</span>
+                        <span class="delete-info-value">{{ deletingItem.category }}</span>
+                    </div>
+                    <div class="delete-info-row">
+                        <span class="delete-info-label">状态</span>
+                        <span :class="['status-tag', statusClass(deletingItem.status)]">{{ deletingItem.status }}</span>
+                    </div>
+                    <div class="delete-info-row" v-if="deletingItem.rating">
+                        <span class="delete-info-label">评分</span>
+                        <span class="delete-info-value">
+                            <span v-for="n in 5" :key="n" :class="['star', {filled: n <= deletingItem.rating}]">&#9733;</span>
+                        </span>
+                    </div>
+                    <div class="delete-info-row" v-if="getProgressText(deletingItem)">
+                        <span class="delete-info-label">进度</span>
+                        <span class="delete-info-value">{{ getProgressText(deletingItem) }}</span>
+                    </div>
+                    <div class="delete-info-row" v-if="deletingItem.note">
+                        <span class="delete-info-label">{{ deletingItem.type === 'video' ? '简介' : '备注' }}</span>
+                        <span class="delete-info-value">{{ deletingItem.note }}</span>
+                    </div>
+                </div>
+                <p class="delete-warn">此操作不可撤销</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" @click="deleteVisible = false">取消</button>
+                <button class="btn-danger" @click="deleteItem" :disabled="deleting">
+                    {{ deleting ? '...' : '确认删除' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div v-if="toast.show" :class="['toast', toast.type]">
+        <span class="toast-icon">{{ toast.icon }}</span>
+        <span>{{ toast.message }}</span>
+    </div>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="/static/js/app.js"></script>
+<script>
+    // PWA：注册 Service Worker（仅 localhost / HTTPS 下生效）
+    if ('serviceWorker' in navigator &&
+        (location.protocol === 'https:' || location.hostname === '127.0.0.1' || location.hostname === 'localhost')) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
         });
-        
-        app.mount('#app');
-    </script>
+    }
+</script>
 </body>
 </html>

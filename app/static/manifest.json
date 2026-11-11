@@ -1,0 +1,19 @@
+{
+  "name": "Media Tracker - 个人多媒体追踪器",
+  "short_name": "Media Tracker",
+  "description": "追踪影视、教程、书籍的观看与阅读进度",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#378ADD",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

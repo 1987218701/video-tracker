@@ -5,5 +5,11 @@ __pycache__/
 *.db
 .DS_Store
 data/
+instance/
 .vscode/
 .idea/
+node_modules/
+.workbuddy-ai/
+.workbuddy/
+.venv/
+venv/
